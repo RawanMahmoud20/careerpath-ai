@@ -33,6 +33,7 @@ def dashboard(request):
         'completed_tasks': completed_tasks,
         'inprog_tasks':    inprog_tasks,
         'progress_pct':    progress_pct,
+        'all_progress': all_progress, 
     }
     return render(request, 'dashboard/dashboard.html', context)
 
