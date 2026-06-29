@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% block title %}My Roadmap — CareerPath AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  .phase-block { margin-bottom: 36px; }
+  .phase-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .phase-num {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--gradient); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .phase-num.locked { background: #E5E7EB; color: var(--slate); }
+
+  .task-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 14px 18px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: all .2s; user-select: none;
+  }
+  .task-card:hover { border-color: rgba(79,70,229,0.3); box-shadow: 0 2px 12px rgba(79,70,229,0.08); }
+  .task-card.status-completed  { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.04); }
+  .task-card.status-in_progress { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+
+  .task-check {
+    width: 24px; height: 24px; border-radius: 7px;
+    border: 2px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 13px; transition: all .2s;
+    background: var(--surface);
+  }
+  .status-completed .task-check  { background: var(--gradient); border-color: transparent; color: #fff; }
+  .status-in_progress .task-check { background: rgba(245,158,11,0.1); border-color: #F59E0B; color: #F59E0B; }
+
+  .task-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+  .status-completed .task-title { text-decoration: line-through; color: var(--slate); }
+  .task-meta { font-size: 12px; color: var(--slate); margin-left: auto; white-space: nowrap; }
+
+  .status-menu {
+    display: none; position: absolute;
+    background: var(--surface); border: 1px solid var(--border-color);
+    border-radius: 10px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 100; min-width: 160px;
+    right: 0; top: 100%;
+  }
+  .status-menu.open { display: block; }
+  .status-option {
+    padding: 8px 12px; border-radius: 7px; font-size: 13px;
+    font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: background .15s;
+  }
+  .status-option:hover { background: rgba(79,70,229,0.07); }
+
+  .overall-banner {
+    background: var(--gradient);
+    border-radius: 16px; padding: 24px 28px;
+    color: #fff; margin-bottom: 28px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .overall-pct {
+    font-family: 'Sora', sans-serif;
+    font-size: 48px; font-weight: 700; line-height: 1; flex-shrink: 0;
+  }
+  .overall-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.25); border-radius: 999px; overflow: hidden; }
+  .overall-bar-fill { height: 100%; background: #fff; border-radius: 999px; transition: width .8s ease; }
+
+  .ai-nudge {
+    background: rgba(79,70,229,0.06);
+    border: 1px solid rgba(79,70,229,0.15);
+    border-radius: 12px; padding: 16px 20px;
+    font-size: 14px; line-height: 1.6;
+    color: var(--ink); margin-top: 28px;
+  }
+  .ai-nudge-label {
+    font-size: 11px; font-weight: 600; color: var(--indigo);
+    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HEADER -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <div style="font-size:13px;color:var(--slate);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">AI-Generated</div>
+    <h1 class="page-title">
+      My Roadmap
+      {% if plan %}<span class="gradient-text">— {{ plan.target_career.title }}</span>{% endif %}
+    </h1>
+    <p class="page-subtitle">Click any task to update your progress.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <span class="badge rounded-pill badge-success-soft px-3 py-2">✓ {{ all_done }} done</span>
+    <span class="badge rounded-pill badge-indigo-soft px-3 py-2">{{ all_tasks }} total tasks</span>
+  </div>
+</div>
+
+{% if not plan %}
+<div class="cp-card text-center py-5">
+  <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
+  <div class="section-title">No roadmap yet</div>
+  <p class="page-subtitle mb-4">Choose a career and run the analysis to generate your personalized roadmap.</p>
+  <a href="{% url 'careers:home' %}" class="btn btn-primary">Explore Careers →</a>
+</div>
+
+{% else %}
+
+<!-- OVERALL BANNER -->
+<div class="overall-banner">
+  <div class="overall-pct">{{ overall_pct }}%</div>
+  <div style="flex:1;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:10px;">Overall Roadmap Progress</div>
+    <div class="overall-bar">
+      <div class="overall-bar-fill" style="width:{{ overall_pct }}%"></div>
+    </div>
+    <div style="font-size:13px;opacity:.8;margin-top:8px;">{{ all_done }} of {{ all_tasks }} tasks complete</div>
+  </div>
+</div>
+
+{% if phases %}
+  {% for phase in phases %}
+  <div class="phase-block">
+    <div class="phase-header">
+      <div class="phase-num {% if forloop.counter > 2 and phase.completed == 0 %}locked{% endif %}">
+        {% if phase.completed == phase.total and phase.total > 0 %}✓{% else %}{{ forloop.counter }}{% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;">{{ phase.title }}</div>
+        <div style="font-size:13px;color:var(--slate);">{{ phase.description|default:"" }}</div>
+      </div>
+      <div>
+        {% if phase.pct == 100 %}
+          <span class="badge rounded-pill badge-success-soft px-3 py-2">✓ Complete</span>
+        {% elif phase.completed > 0 %}
+          <span class="badge rounded-pill badge-warning-soft px-3 py-2">⟳ In progress</span>
+        {% else %}
+          <span class="badge rounded-pill badge-slate-soft px-3 py-2">Not started</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Phase Progress Bar -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-left:52px;">
+      <div class="cp-progress" style="flex:1;">
+        <div class="cp-progress-fill" style="width:{{ phase.pct }}%"></div>
+      </div>
+      <span style="font-size:12px;color:var(--slate);width:36px;">{{ phase.pct }}%</span>
+    </div>
+
+    <!-- Tasks -->
+    <div style="padding-left:52px;" class="position-relative">
+      {% for task in phase.tasks %}
+      <div class="task-card status-{{ progress_map|default_if_none:task.ref|default:'not_started' }}"
+           data-ref="{{ task.ref }}"
+           id="task-{{ task.ref|slugify }}"
+           onclick="toggleStatusMenu(this)">
+
+        <div class="task-check">
+          {% with s=progress_map|default_if_none:"" %}
+            {% if s == 'completed' %}✓
+            {% elif s == 'in_progress' %}⟳
+            {% endif %}
+          {% endwith %}
+        </div>
+
+        <div style="flex:1;">
+          <div class="task-title">{{ task.title }}</div>
+          {% if task.description %}
+          <div style="font-size:12px;color:var(--slate);margin-top:2px;">{{ task.description }}</div>
+          {% endif %}
+        </div>
+
+        {% if task.estimated_time %}
+        <div class="task-meta">⏱ {{ task.estimated_time }}</div>
+        {% endif %}
+
+        <div style="position:relative;">
+          <div class="status-menu" id="menu-{{ task.ref|slugify }}">
+            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','not_started')">⬜ Not started</div>
+            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','in_progress')">⟳ In progress</div>
+            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','completed')">✓ Completed</div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="color:var(--slate);font-size:14px;padding:12px 0;">No tasks in this phase.</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+<div class="cp-card text-center py-5">
+  <div style="font-size:48px;margin-bottom:16px;">🤖</div>
+  <div class="section-title">Roadmap is being generated</div>
+  <p class="page-subtitle mb-4">Run the AI analysis to build your personalized roadmap.</p>
+  <a href="{% url 'analysis:home' %}" class="btn btn-primary">Run Analysis →</a>
+</div>
+{% endif %}
+
+{% if latest_ai %}
+<div class="ai-nudge">
+  <div class="ai-nudge-label">🤖 AI Next Step</div>
+  {{ latest_ai.content }}
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.task-card')) {
+    document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+function toggleStatusMenu(card) {
+  const ref    = card.dataset.ref;
+  const menuId = 'menu-' + ref.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const menu   = document.getElementById(menuId);
+  if (!menu) return;
+  document.querySelectorAll('.status-menu.open').forEach(m => {
+    if (m !== menu) m.classList.remove('open');
+  });
+  menu.classList.toggle('open');
+}
+
+function setStatus(e, taskRef, newStatus) {
+  e.stopPropagation();
+  document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
+
+  const cardId = 'task-' + taskRef.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const card   = document.getElementById(cardId);
+  if (!card) return;
+
+  card.classList.remove('status-not_started', 'status-in_progress', 'status-completed');
+  card.classList.add('status-' + newStatus);
+
+  const checkEl = card.querySelector('.task-check');
+  if (checkEl) {
+    checkEl.textContent = newStatus === 'completed' ? '✓' : newStatus === 'in_progress' ? '⟳' : '';
+  }
+
+  fetch('{% url "dashboard:update_task" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify({ task_ref: taskRef, status: newStatus }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const labels = {
+        completed:   '✓ Marked complete',
+        in_progress: '⟳ In progress',
+        not_started: 'Reset to not started'
+      };
+      showToast(labels[newStatus] || 'Updated');
+    }
+  })
+  .catch(() => showToast('Could not save — check connection'));
+}
+</script>
+{% endblock %}
