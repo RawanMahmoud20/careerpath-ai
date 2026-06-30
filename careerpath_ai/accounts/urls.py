@@ -1,9 +1,10 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
+from .views import register_view, EmailLoginView, logout_view
 
-app_name = 'accounts'
-
+# No app_name namespace, so names are referenced directly as
+# 'login', 'register', 'logout' (matches Django's LOGIN_URL convention).
 urlpatterns = [
-    path('login/',  auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path("login/", EmailLoginView.as_view(), name="login"),
+    path("register/", register_view, name="register"),
+    path("logout/", logout_view, name="logout"),
 ]
