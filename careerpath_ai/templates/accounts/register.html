@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Sign up - CareerPath AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <a href="{% url 'landing' %}" class="auth-logo">🚀 CareerPath AI</a>
+    <p class="auth-subtitle">Create your account and start your career journey</p>
+
+    {% if form.non_field_errors %}
+      {% for error in form.non_field_errors %}
+        <div class="message message-danger">{{ error }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" action="{% url 'register' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="{{ form.full_name.id_for_label }}">Full name</label>
+        {{ form.full_name }}
+        {% for error in form.full_name.errors %}
+          <div class="message message-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.email.id_for_label }}">Email</label>
+        {{ form.email }}
+        {% for error in form.email.errors %}
+          <div class="message message-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
+        {% for error in form.password.errors %}
+          <div class="message message-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+        {{ form.password2 }}
+        {% for error in form.password2.errors %}
+          <div class="message message-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn-primary btn-full">Create account</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{% url 'login' %}">Log in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
