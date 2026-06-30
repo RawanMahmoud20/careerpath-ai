@@ -410,6 +410,9 @@ select.form-control { cursor: pointer; }
   padding: 16px 48px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 /* --------------------------------------------------------------- Responsive */
@@ -420,4 +423,12 @@ select.form-control { cursor: pointer; }
   .container, .container-narrow { padding: 32px 18px; }
   .page-title { font-size: 26px; }
   .ai-box { flex-direction: column; }
+}
+
+/* Form field validation errors */
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #991B1B;
 }
