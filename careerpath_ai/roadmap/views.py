@@ -3,7 +3,8 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from dashboard.models import UserTaskProgress
+from dashboard.models import UserTaskProgress, UserProfile
+
 
 @login_required
 def roadmap(request):
@@ -12,7 +13,7 @@ def roadmap(request):
     ai_roadmap = None
 
     try:
-        from apps.analysis.models import CareerTransitionPlan, AIRecommendation
+        from analysis.models import CareerTransitionPlan, AIRecommendation
         plan = CareerTransitionPlan.objects.filter(user=user).order_by('-created_at').first()
 
         if plan:
@@ -30,7 +31,6 @@ def roadmap(request):
     except Exception:
         pass
 
-#    from dashboard.models import UserTaskProgress
     progress_qs = UserTaskProgress.objects.filter(user=user)
     progress_map = {p.task_ref: p.status for p in progress_qs}
 
@@ -39,14 +39,13 @@ def roadmap(request):
         for phase in ai_roadmap['phases']:
             tasks = phase.get('tasks', [])
             total = len(tasks)
-            
-            # 🔥 Modification: Injecting the task status directly into the dictionary for easier reading in the template
+
             for t in tasks:
                 t['status'] = progress_map.get(t['ref'], 'not_started')
 
             completed = sum(1 for t in tasks if t['status'] == 'completed')
             pct = int((completed / total) * 100) if total > 0 else 0
-            
+
             phases_with_stats.append({
                 **phase,
                 'tasks': tasks,
@@ -67,3 +66,28 @@ def roadmap(request):
         'all_tasks': all_tasks,
     }
     return render(request, 'roadmap/roadmap.html', context)
+
+
+@login_required
+def skills_selection(request):
+    """Display the skill selection page for the user"""
+    return render(request, 'roadmap/skills_selection.html')
+
+
+@login_required
+@require_POST
+def save_skills(request):
+    try:
+        data = json.loads(request.body)
+        selected_skills = data.get('skills', [])
+
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.skills = selected_skills
+        profile.save()
+
+        return JsonResponse({
+            'success': True,
+            'redirect_url': '/roadmap/'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
