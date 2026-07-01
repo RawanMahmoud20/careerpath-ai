@@ -112,20 +112,30 @@ a { text-decoration: none; color: inherit; }
 
 .btn-full { width: 100%; }
 
-/* --------------------------------------------------------------- Messages */
-.messages { max-width: 1100px; margin: 16px auto 0; padding: 0 24px; }
 .message {
-  padding: 12px 20px;
+  padding: 14px 20px;
   border-radius: var(--radius);
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
-.message-success { background: var(--success-bg); color: #1B5E20; }
-.message-danger  { background: #FEE2E2; color: #991B1B; }
-.message-info    { background: #DBEAFE; color: #1E40AF; }
-.message-warning { background: var(--warning-bg); color: #B45309; }
-
+.message::before {
+  font-size: 16px;
+}
+.message-success {
+  background: var(--success-bg);
+  color: #1B5E20;
+  border-color: #A7D7AF;
+}
+.message-success::before { content: "✓"; font-weight: 700; }
+.message-danger::before  { content: "✕"; font-weight: 700; }
+.message-info::before    { content: "ℹ"; }
+.message-warning::before { content: "⚠"; }
 /* --------------------------------------------------------------- Layout */
 main { min-height: calc(100vh - 73px); }
 .container { max-width: 1100px; margin: 0 auto; padding: 48px 24px; }

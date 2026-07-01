@@ -18,7 +18,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, "Welcome! Your account has been created.")
-            return redirect("landing")
+            return redirect("dashboard:home")
     else:
         form = RegisterForm()
 
