@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ah7q(utv*+b@#g29t@^o2pnm3(yba11@*zq3&t^!45vf@ypi_y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'analysis',
     'dashboard',
     'roadmap',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -120,5 +121,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Tell Django where to find project-wide static files (the css/js/img folder
+# at the project root). Without this, {% static %} can't locate style.css.
+STATICFILES_DIRS = [BASE_DIR / 'static']
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
+AUTH_USER_MODEL = 'accounts.User'
