@@ -10,15 +10,15 @@
     </h1>
     <p style="font-size: 15px; color: #64748B; margin-bottom: 0;">Here's where you stand on your career transition.</p>
   </div>
-  {% if plan %}
-  <a href="#" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
+{% if plan %}
+  <a href="{% url 'roadmap:home' %}" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
     <i class="bi bi-map me-2"></i> Continue Roadmap
   </a>
   {% else %}
-  <a href="#" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
+  <a href="{% url 'careers:list' %}" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
     <i class="bi bi-plus-lg me-2"></i> Choose a Career
   </a>
-  {% endif %}
+{% endif %}
 </div>
 <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
   <div class="d-flex align-items-center justify-content-between mb-3">
