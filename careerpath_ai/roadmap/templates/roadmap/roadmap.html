@@ -1,4 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
 {% block title %}My Roadmap — CareerPath AI{% endblock %}
 
 {% block extra_css %}
@@ -7,120 +9,96 @@
   .phase-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
   .phase-num {
     width: 38px; height: 38px; border-radius: 10px;
-    background: var(--gradient); color: #fff;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700;
     flex-shrink: 0;
   }
-  .phase-num.locked { background: #E5E7EB; color: var(--slate); }
+  .phase-num.locked { background: #E5E7EB; color: #64748B; }
 
   .task-card {
     display: flex; align-items: center; gap: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border-color);
+    background: #ffffff; border: 1px solid #E2E8F0;
     border-radius: 12px; padding: 14px 18px;
     margin-bottom: 8px; cursor: pointer;
+    position: relative;
     transition: all .2s; user-select: none;
   }
-  .task-card:hover { border-color: rgba(79,70,229,0.3); box-shadow: 0 2px 12px rgba(79,70,229,0.08); }
+  .task-card:hover { border-color: rgba(79,70,229,0.3); box-shadow: 0 4px 12px rgba(79,70,229,0.08); }
   .task-card.status-completed  { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.04); }
   .task-card.status-in_progress { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
 
   .task-check {
-    width: 24px; height: 24px; border-radius: 7px;
-    border: 2px solid var(--border-color);
+    width: 24px; height: 24px; border-radius: 7px; border: 2px solid #E2E8F0;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 13px; transition: all .2s;
-    background: var(--surface);
+    flex-shrink: 0; font-size: 13px; transition: all .2s; background: #ffffff;
   }
-  .status-completed .task-check  { background: var(--gradient); border-color: transparent; color: #fff; }
+  .status-completed .task-check  { background: linear-gradient(135deg, #4F46E5, #7C3AED); border-color: transparent; color: #fff; }
   .status-in_progress .task-check { background: rgba(245,158,11,0.1); border-color: #F59E0B; color: #F59E0B; }
 
-  .task-title { font-size: 14px; font-weight: 500; color: var(--ink); }
-  .status-completed .task-title { text-decoration: line-through; color: var(--slate); }
-  .task-meta { font-size: 12px; color: var(--slate); margin-left: auto; white-space: nowrap; }
+  .task-title { font-size: 14px; font-weight: 500; color: #0F1419; }
+  .status-completed .task-title { text-decoration: line-through; color: #64748B; }
+  .task-meta { font-size: 12px; color: #64748B; margin-left: auto; white-space: nowrap; }
 
   .status-menu {
-    display: none; position: absolute;
-    background: var(--surface); border: 1px solid var(--border-color);
-    border-radius: 10px; padding: 6px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    z-index: 100; min-width: 160px;
-    right: 0; top: 100%;
+    display: none; position: absolute; right: 20px; top: 80%;
+    background: #ffffff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100; min-width: 160px;
   }
   .status-menu.open { display: block; }
   .status-option {
-    padding: 8px 12px; border-radius: 7px; font-size: 13px;
-    font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; gap: 8px;
-    transition: background .15s;
+    padding: 8px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; transition: background .15s; color: #0F1419;
   }
   .status-option:hover { background: rgba(79,70,229,0.07); }
 
-  .overall-banner {
-    background: var(--gradient);
-    border-radius: 16px; padding: 24px 28px;
-    color: #fff; margin-bottom: 28px;
-    display: flex; align-items: center; gap: 24px;
-  }
-  .overall-pct {
-    font-family: 'Sora', sans-serif;
-    font-size: 48px; font-weight: 700; line-height: 1; flex-shrink: 0;
-  }
-  .overall-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.25); border-radius: 999px; overflow: hidden; }
-  .overall-bar-fill { height: 100%; background: #fff; border-radius: 999px; transition: width .8s ease; }
-
   .ai-nudge {
-    background: rgba(79,70,229,0.06);
-    border: 1px solid rgba(79,70,229,0.15);
-    border-radius: 12px; padding: 16px 20px;
-    font-size: 14px; line-height: 1.6;
-    color: var(--ink); margin-top: 28px;
-  }
-  .ai-nudge-label {
-    font-size: 11px; font-weight: 600; color: var(--indigo);
-    text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;
+    background: rgba(79,70,229,0.06); border: 1px solid rgba(79,70,229,0.15);
+    border-radius: 12px; padding: 16px 20px; font-size: 14px; line-height: 1.6; color: #0F1419; margin-top: 28px;
   }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- HEADER -->
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <div style="font-size:13px;color:var(--slate);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">AI-Generated</div>
-    <h1 class="page-title">
-      My Roadmap
-      {% if plan %}<span class="gradient-text">— {{ plan.target_career.title }}</span>{% endif %}
+    <div style="font-size:13px; color:#64748B; text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; font-weight:500;">AI-Generated</div>
+    <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px;">
+      My Roadmap {% if plan %}<span class="text-gradient-custom">— {{ plan.target_career.title }}</span>{% endif %}
     </h1>
-    <p class="page-subtitle">Click any task to update your progress.</p>
+    <p style="font-size:15px; color:#64748B; margin-bottom:0;">Click any task to update your progress.</p>
   </div>
   <div class="d-flex gap-2 flex-wrap">
-    <span class="badge rounded-pill badge-success-soft px-3 py-2">✓ {{ all_done }} done</span>
-    <span class="badge rounded-pill badge-indigo-soft px-3 py-2">{{ all_tasks }} total tasks</span>
+    <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">✓ {{ all_done }} done</span>
+    <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">{{ all_tasks }} total tasks</span>
   </div>
 </div>
 
 {% if not plan %}
-<div class="cp-card text-center py-5">
+<div class="card border-0 shadow-sm text-center py-5 px-4" style="border-radius: 16px;">
   <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
-  <div class="section-title">No roadmap yet</div>
-  <p class="page-subtitle mb-4">Choose a career and run the analysis to generate your personalized roadmap.</p>
-  <a href="{% url 'careers:home' %}" class="btn btn-primary">Explore Careers →</a>
+  <h4 class="fw-bold text-dark">No roadmap yet</h4>
+  <p class="text-muted mb-4">Choose a career and run the analysis to generate your personalized roadmap.</p>
+  <div class="d-flex justify-content-center">
+    <a href="#" class="btn bg-gradient-custom text-white border-0 px-4 py-2" style="border-radius: 10px;">Explore Careers →</a>
+  </div>
 </div>
 
 {% else %}
 
-<!-- OVERALL BANNER -->
-<div class="overall-banner">
-  <div class="overall-pct">{{ overall_pct }}%</div>
-  <div style="flex:1;">
-    <div style="font-size:15px;font-weight:600;margin-bottom:10px;">Overall Roadmap Progress</div>
-    <div class="overall-bar">
-      <div class="overall-bar-fill" style="width:{{ overall_pct }}%"></div>
+<div class="p-4 mb-4 text-white bg-gradient-custom shadow-sm" style="border-radius: 16px;">
+  <div class="row align-items-center g-3">
+    <div class="col-auto">
+      <h1 class="fw-bold ff-sora mb-0" style="font-size: 48px;">{{ overall_pct }}%</h1>
     </div>
-    <div style="font-size:13px;opacity:.8;margin-top:8px;">{{ all_done }} of {{ all_tasks }} tasks complete</div>
+    <div class="col">
+      <div class="fw-semibold mb-2" style="font-size: 15px;">Overall Roadmap Progress</div>
+      <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.25); border-radius: 999px;">
+        <div class="progress-bar bg-white" role="progressbar" style="width: {{ overall_pct }}%; border-radius: 999px;"></div>
+      </div>
+      <div class="small mt-2" style="opacity: .8;">{{ all_done }} of {{ all_tasks }} tasks complete</div>
+    </div>
   </div>
 </div>
 
@@ -132,84 +110,63 @@
         {% if phase.completed == phase.total and phase.total > 0 %}✓{% else %}{{ forloop.counter }}{% endif %}
       </div>
       <div style="flex:1;">
-        <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:700;">{{ phase.title }}</div>
-        <div style="font-size:13px;color:var(--slate);">{{ phase.description|default:"" }}</div>
+        <div class="ff-sora fw-bold text-dark" style="font-size: 16px;">{{ phase.title }}</div>
+        <div style="font-size:13px; color:#64748B;">{{ phase.description|default:"" }}</div>
       </div>
       <div>
         {% if phase.pct == 100 %}
-          <span class="badge rounded-pill badge-success-soft px-3 py-2">✓ Complete</span>
+          <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">✓ Complete</span>
         {% elif phase.completed > 0 %}
-          <span class="badge rounded-pill badge-warning-soft px-3 py-2">⟳ In progress</span>
+          <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2">⟳ In progress</span>
         {% else %}
-          <span class="badge rounded-pill badge-slate-soft px-3 py-2">Not started</span>
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3 py-2">Not started</span>
         {% endif %}
       </div>
     </div>
 
-    <!-- Phase Progress Bar -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-left:52px;">
-      <div class="cp-progress" style="flex:1;">
-        <div class="cp-progress-fill" style="width:{{ phase.pct }}%"></div>
+    <div class="d-flex align-items-center gap-3 mb-3" style="padding-left: 52px;">
+      <div class="progress style-progress flex-grow-1" style="height: 6px; background-color: #F1F5F9; border-radius: 999px;">
+        <div class="progress-bar bg-gradient-custom" role="progressbar" style="width: {{ phase.pct }}%; border-radius: 999px;"></div>
       </div>
-      <span style="font-size:12px;color:var(--slate);width:36px;">{{ phase.pct }}%</span>
+      <span class="small text-muted" style="width: 36px;">{{ phase.pct }}%</span>
     </div>
 
-    <!-- Tasks -->
-    <div style="padding-left:52px;" class="position-relative">
+    <div style="padding-left: 52px;">
       {% for task in phase.tasks %}
-      <div class="task-card status-{{ progress_map|default_if_none:task.ref|default:'not_started' }}"
+      <div class="task-card status-{{ task.status }}"
            data-ref="{{ task.ref }}"
            id="task-{{ task.ref|slugify }}"
            onclick="toggleStatusMenu(this)">
 
         <div class="task-check">
-          {% with s=progress_map|default_if_none:"" %}
-            {% if s == 'completed' %}✓
-            {% elif s == 'in_progress' %}⟳
-            {% endif %}
-          {% endwith %}
+           {% if task.status == 'completed' %}✓
+           {% elif task.status == 'in_progress' %}⟳
+           {% endif %}
         </div>
 
         <div style="flex:1;">
           <div class="task-title">{{ task.title }}</div>
           {% if task.description %}
-          <div style="font-size:12px;color:var(--slate);margin-top:2px;">{{ task.description }}</div>
+          <div class="small text-muted mt-1">{{ task.description }}</div>
           {% endif %}
         </div>
 
         {% if task.estimated_time %}
-        <div class="task-meta">⏱ {{ task.estimated_time }}</div>
+        <div class="task-meta small text-muted me-2">⏱ {{ task.estimated_time }}</div>
         {% endif %}
 
-        <div style="position:relative;">
-          <div class="status-menu" id="menu-{{ task.ref|slugify }}">
-            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','not_started')">⬜ Not started</div>
-            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','in_progress')">⟳ In progress</div>
-            <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','completed')">✓ Completed</div>
-          </div>
+        <div class="status-menu" id="menu-{{ task.ref|slugify }}">
+          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','not_started')">⬜ Not started</div>
+          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','in_progress')">⟳ In progress</div>
+          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','completed')">✓ Completed</div>
         </div>
       </div>
       {% empty %}
-      <div style="color:var(--slate);font-size:14px;padding:12px 0;">No tasks in this phase.</div>
+      <div class="text-muted small py-2">No tasks in this phase.</div>
       {% endfor %}
     </div>
   </div>
   {% endfor %}
-
-{% else %}
-<div class="cp-card text-center py-5">
-  <div style="font-size:48px;margin-bottom:16px;">🤖</div>
-  <div class="section-title">Roadmap is being generated</div>
-  <p class="page-subtitle mb-4">Run the AI analysis to build your personalized roadmap.</p>
-  <a href="{% url 'analysis:home' %}" class="btn btn-primary">Run Analysis →</a>
-</div>
-{% endif %}
-
-{% if latest_ai %}
-<div class="ai-nudge">
-  <div class="ai-nudge-label">🤖 AI Next Step</div>
-  {{ latest_ai.content }}
-</div>
 {% endif %}
 
 {% endif %}
@@ -217,58 +174,8 @@
 
 {% block extra_js %}
 <script>
-const CSRF = '{{ csrf_token }}';
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('.task-card')) {
-    document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
-  }
-});
-
-function toggleStatusMenu(card) {
-  const ref    = card.dataset.ref;
-  const menuId = 'menu-' + ref.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-  const menu   = document.getElementById(menuId);
-  if (!menu) return;
-  document.querySelectorAll('.status-menu.open').forEach(m => {
-    if (m !== menu) m.classList.remove('open');
-  });
-  menu.classList.toggle('open');
-}
-
-function setStatus(e, taskRef, newStatus) {
-  e.stopPropagation();
-  document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
-
-  const cardId = 'task-' + taskRef.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-  const card   = document.getElementById(cardId);
-  if (!card) return;
-
-  card.classList.remove('status-not_started', 'status-in_progress', 'status-completed');
-  card.classList.add('status-' + newStatus);
-
-  const checkEl = card.querySelector('.task-check');
-  if (checkEl) {
-    checkEl.textContent = newStatus === 'completed' ? '✓' : newStatus === 'in_progress' ? '⟳' : '';
-  }
-
-  fetch('{% url "dashboard:update_task" %}', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
-    body: JSON.stringify({ task_ref: taskRef, status: newStatus }),
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      const labels = {
-        completed:   '✓ Marked complete',
-        in_progress: '⟳ In progress',
-        not_started: 'Reset to not started'
-      };
-      showToast(labels[newStatus] || 'Updated');
-    }
-  })
-  .catch(() => showToast('Could not save — check connection'));
-}
+  const CSRF_TOKEN = '{{ csrf_token }}';
+  const UPDATE_TASK_URL = "{% url 'dashboard:update_task' %}";
 </script>
+<script src="{% static 'js/roadmap.js' %}"></script>
 {% endblock %}

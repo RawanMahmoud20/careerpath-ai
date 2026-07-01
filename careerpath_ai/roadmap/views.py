@@ -1,11 +1,9 @@
+import json
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-import json
-
 from dashboard.models import UserTaskProgress
-
 
 @login_required
 def roadmap(request):
@@ -32,6 +30,7 @@ def roadmap(request):
     except Exception:
         pass
 
+#    from dashboard.models import UserTaskProgress
     progress_qs = UserTaskProgress.objects.filter(user=user)
     progress_map = {p.task_ref: p.status for p in progress_qs}
 
@@ -40,8 +39,14 @@ def roadmap(request):
         for phase in ai_roadmap['phases']:
             tasks = phase.get('tasks', [])
             total = len(tasks)
-            completed = sum(1 for t in tasks if progress_map.get(t['ref']) == 'completed')
+            
+            # 🔥 Modification: Injecting the task status directly into the dictionary for easier reading in the template
+            for t in tasks:
+                t['status'] = progress_map.get(t['ref'], 'not_started')
+
+            completed = sum(1 for t in tasks if t['status'] == 'completed')
             pct = int((completed / total) * 100) if total > 0 else 0
+            
             phases_with_stats.append({
                 **phase,
                 'tasks': tasks,
@@ -57,7 +62,6 @@ def roadmap(request):
     context = {
         'plan': plan,
         'phases': phases_with_stats,
-        'progress_map': progress_map,
         'overall_pct': overall_pct,
         'all_done': all_done,
         'all_tasks': all_tasks,
