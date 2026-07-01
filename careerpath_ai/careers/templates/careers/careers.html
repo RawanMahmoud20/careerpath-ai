@@ -1,0 +1,73 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Careers — CareerPath AI{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+  <div style="font-size: 13px; color: #64748B; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; font-weight: 500;">Explore paths</div>
+  <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px; letter-spacing: -0.5px;">Choose your target career </h1>
+  <p style="font-size: 15px; color: #64748B; margin-bottom: 0;">Pick the role you're aiming for — we'll tailor your roadmap around it.</p>
+</div>
+
+{% if careers %}
+<div class="row g-4">
+  {% for career in careers %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 h-100 cp-card-hover">
+      <div class="card-body p-4 d-flex flex-column">
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="bg-gradient-custom text-white d-flex align-items-center justify-content-center rounded-3"
+               style="width: 48px; height: 48px; font-size: 22px;">
+            💼
+          </div>
+          {% if career.id == selected_id %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+              <i class="bi bi-check-circle-fill me-1"></i> Current target
+            </span>
+          {% endif %}
+        </div>
+
+        <h5 class="ff-sora fw-bold text-dark mb-2">{{ career.title }}</h5>
+        <p style="font-size: 14px; color: #64748B; flex-grow: 1;">{{ career.description|truncatewords:25 }}</p>
+
+        {% if career.required_skills.all %}
+        <div class="mb-3">
+          {% for skill in career.required_skills.all|slice:":4" %}
+            <span class="badge bg-light text-secondary border me-1 mb-1 fw-normal" style="font-size: 12px;">{{ skill.name }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'careers:choose' career.id %}" class="mt-auto">
+          {% csrf_token %}
+          {% if career.id == selected_id %}
+            <button type="submit" class="btn btn-outline-secondary w-100 rounded-3" style="font-weight: 500;" disabled>
+              ✓ Selected
+            </button>
+          {% else %}
+            <button type="submit" class="btn bg-gradient-custom text-white w-100 border-0 btn-custom-primary rounded-3" style="font-weight: 500;">
+              Choose this path
+            </button>
+          {% endif %}
+        </form>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm rounded-4">
+  <div class="card-body text-center py-5">
+    <div style="font-size: 48px;">📭</div>
+    <h5 class="ff-sora fw-bold mt-3">No careers available yet</h5>
+    <p class="text-muted" style="font-size: 14px;">
+      Careers need to be added from the admin panel first.<br>
+      Go to <code>/admin/</code> → Careers → Add.
+    </p>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

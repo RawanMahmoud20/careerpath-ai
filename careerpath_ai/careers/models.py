@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # 1. جدول المهارات الأساسية
 class Skill(models.Model):
@@ -28,3 +29,18 @@ class CareerSkill(models.Model):
 
     class Meta:
         unique_together = ('career', 'skill')
+
+
+# 4. جدول ربط المستخدم بالمسار المهني الذي اختاره كهدف
+class SelectedCareer(models.Model):
+    """يربط كل مستخدم بالمسار المهني الذي اختاره كهدف حالي."""
+    user   = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='selected_career',
+    )
+    career = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='chosen_by')
+    chosen_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} → {self.career.title}"
