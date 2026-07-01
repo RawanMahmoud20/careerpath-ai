@@ -1,7 +1,15 @@
-# Ignore Python cache
+# Database
+*.sqlite3
+db.sqlite3
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
+# Virtual environment
+venv/
 # Or specifically for your path:
 python_stack/my_environments/*
 
