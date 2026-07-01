@@ -19,7 +19,52 @@
   </a>
   {% endif %}
 </div>
+<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="ff-sora fw-bold text-dark" style="font-size: 16px;">📋 My Career Transition Tasks</div>
+    <span class="text-muted small">تحديث تلقائي بدون الحاجه لإعادة تحميل الصفحة</span>
+  </div>
 
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="border-color: #F1F5F9;">
+      <thead class="table-light" style="font-size: 13px; color: #64748B;">
+        <tr>
+          <th>Task Reference</th>
+          <th>Status</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody style="font-size: 14.5px;">
+        {% for task in user_tasks|default:all_progress %}
+        <tr data-task-ref="{{ task.task_ref }}">
+          <td class="fw-medium text-dark">{{ task.task_ref }}</td>
+          <td>
+            <span class="badge status-badge rounded-pill px-3 py-1.5 
+              {% if task.status == 'completed' %}bg-success-subtle text-success
+              {% elif task.status == 'in_progress' %}bg-warning-subtle text-warning-emphasis
+              {% else %}bg-secondary-subtle text-secondary{% endif %}">
+              {{ task.get_status_display|default:task.status }}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex justify-content-center gap-1">
+              <select class="form-select form-select-sm task-status-select" style="max-width: 150px; border-radius: 8px; font-size: 13px;">
+                <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>Not Started</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+              </select>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="text-center py-4 text-muted">No tasks assigned yet. Your tasks will appear once your roadmap is ready!</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 <div class="row g-3 mb-4">
 
   <div class="col-md-3">
