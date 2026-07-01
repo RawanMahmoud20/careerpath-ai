@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}CareerPath AI - Plan Your Career Transition{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-badge">🎯 AI-powered career planning</div>
+  <h1>Transition to a new career with a <span class="gradient-text">personalized plan</span></h1>
+  <p>
+    Discover the skills you need, get an AI-generated roadmap, and move
+    confidently toward your target role — one step at a time.
+  </p>
+  <div class="hero-buttons">
+    {% if user.is_authenticated %}
+      <a href="{% url 'dashboard:home' %}" class="btn-primary">Go to dashboard</a>
+    {% else %}
+      <a href="{% url 'register' %}" class="btn-primary">Start free</a>
+      <a href="{% url 'login' %}" class="btn-secondary">I have an account</a>
+    {% endif %}
+  </div>
+</section>
+
+<div class="container">
+  <h2 class="section-title text-center">Explore career paths</h2>
+  <div class="grid">
+
+    <!-- Card 1: Data Analyst -->
+    <div class="career-card">
+      <div class="career-icon">📊</div>
+      <div class="career-title">Data Analyst</div>
+      <div class="career-desc">
+        Transform raw data into actionable insights using SQL, visualization
+        tools, and statistical thinking.
+      </div>
+      <div class="career-meta">⏱️ 12-16 weeks</div>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+      {% else %}
+        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+      {% endif %}
+    </div>
+
+    <!-- Card 2: Frontend Developer -->
+    <div class="career-card">
+      <div class="career-icon">💻</div>
+      <div class="career-title">Frontend Developer</div>
+      <div class="career-desc">
+        Build beautiful, responsive web interfaces with HTML, CSS, JavaScript,
+        and modern frameworks like React.
+      </div>
+      <div class="career-meta">⏱️ 14-20 weeks</div>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+      {% else %}
+        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+      {% endif %}
+    </div>
+
+    <!-- Card 3: UI/UX Designer -->
+    <div class="career-card">
+      <div class="career-icon">🎨</div>
+      <div class="career-title">UI/UX Designer</div>
+      <div class="career-desc">
+        Design intuitive, beautiful user experiences through research,
+        wireframing, and prototyping in tools like Figma.
+      </div>
+      <div class="career-meta">⏱️ 10-14 weeks</div>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+      {% else %}
+        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

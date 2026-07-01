@@ -7,6 +7,7 @@ import json
 from dashboard.models import UserTaskProgress
 
 
+@login_required
 def dashboard(request):
     user = request.user
 
@@ -38,6 +39,7 @@ def dashboard(request):
     return render(request, 'dashboard/dashboard.html', context)
 
 
+@login_required
 @require_POST
 def update_task_status(request):
     try:
