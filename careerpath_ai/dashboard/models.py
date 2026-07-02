@@ -20,7 +20,13 @@ class UserTaskProgress(models.Model):
     def __str__(self):
         return f"{self.user.email} | {self.task_ref} | {self.status}"
 
-
 class UserProfile(models.Model):
+    EXPERIENCE_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ]
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     skills = models.JSONField(default=list, blank=True)
+    current_field = models.CharField(max_length=150, blank=True)
+    experience_level = models.CharField(max_length=20, choices=EXPERIENCE_CHOICES, default='beginner')
