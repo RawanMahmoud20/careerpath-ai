@@ -12,34 +12,37 @@ def skill_gap_analysis(request, career_id):
     user = request.user
     career = get_object_or_404(Career, id=career_id)
 
-    # Get user skills
     try:
         profile = UserProfile.objects.get(user=user)
         user_skills = set(profile.skills)
     except UserProfile.DoesNotExist:
         user_skills = set()
 
-    # Get required skills for this career
     required_skills = set(
         CareerSkill.objects.filter(career=career)
         .values_list('skill__name', flat=True)
     )
 
-    # Calculate gap
     missing_skills = required_skills - user_skills
     matched_skills = required_skills & user_skills
     match_pct = int((len(matched_skills) / len(required_skills)) * 100) if required_skills else 0
 
-    # Save transition plan
     plan, _ = CareerTransitionPlan.objects.get_or_create(
         user=user,
         target_career=career
     )
 
-    return JsonResponse({
-        'career': career.title,
+    context = {
+        'career': career,
         'matched_skills': list(matched_skills),
         'missing_skills': list(missing_skills),
         'match_pct': match_pct,
-        'plan_id': plan.id,
-    })
+        'plan': plan,
+    }
+    return render(request, 'analysis/skill_gap.html', context)
+
+
+@login_required
+def analysis_home(request):
+    careers = Career.objects.all()
+    return render(request, 'analysis/analysis_home.html', {'careers': careers})
