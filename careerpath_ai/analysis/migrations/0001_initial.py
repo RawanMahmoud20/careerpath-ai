@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('careers', '0004_alter_career_id_alter_careerskill_id_and_more'),
+        ('careers', '0003_selectedcareer'), 
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
