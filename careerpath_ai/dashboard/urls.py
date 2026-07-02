@@ -4,6 +4,8 @@ from . import views
 app_name = 'dashboard'
 
 urlpatterns = [
-    path('', views.dashboard,name='home'),
-    path('update-task/',views.update_task_status,  name='update_task'),
+    path('', views.dashboard, name='home'),
+    path('update-task/', views.update_task_status, name='update_task'),
+    path('profile/', views.profile, name='profile'),
+
 ]
