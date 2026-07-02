@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
 
-from dashboard.models import UserTaskProgress
+from dashboard.models import UserTaskProgress, UserProfile
 
 
 @login_required
@@ -61,3 +62,38 @@ def update_task_status(request):
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        
+
+@login_required
+def profile(request):
+    """صفحة الملف الشخصي: تعرض/تعدّل الاسم والمجال ومستوى الخبرة."""
+    user = request.user
+    profile_obj, _ = UserProfile.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        # تحديث الاسم
+        full_name = request.POST.get('full_name', '').strip()
+        user.full_name = full_name
+        user.save()
+
+        # تحديث المجال الحالي ومستوى الخبرة
+        profile_obj.current_field = request.POST.get('current_field', '').strip()
+        profile_obj.experience_level = request.POST.get('experience_level', 'beginner')
+        profile_obj.save()
+
+        messages.success(request, 'Your profile has been updated.')
+        return redirect('dashboard:profile')
+
+    # المسار المختار (للعرض في القائمة الجانبية)
+    plan = None
+    try:
+        from analysis.models import CareerTransitionPlan
+        plan = CareerTransitionPlan.objects.filter(user=user).order_by('-created_at').first()
+    except Exception:
+        pass
+
+    context = {
+        'profile': profile_obj,
+        'plan': plan,
+    }
+    return render(request, 'dashboard/profile.html', context)

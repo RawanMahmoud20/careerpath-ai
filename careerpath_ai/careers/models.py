@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-# 1. جدول المهارات الأساسية
 class Skill(models.Model):
     name = models.CharField(max_length=100, unique=True)
     category = models.CharField(max_length=100, blank=True, null=True) # مثل: Technical, Soft Skill
@@ -12,7 +11,7 @@ class Skill(models.Model):
     def __str__(self):
         return self.name
 
-# 2. جدول المسارات المهنية (Careers)
+# 2. Careers)
 class Career(models.Model):
     title = models.CharField(max_length=150, unique=True) # مثل: Data Analyst
     description = models.TextField()
@@ -21,7 +20,6 @@ class Career(models.Model):
     def __str__(self):
         return self.title
 
-# 3. جدول الربط بين الوظيفة والمهارات المطلوبة لها (علاقة Many-to-Many)
 class CareerSkill(models.Model):
     career = models.ForeignKey(Career, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
@@ -31,9 +29,7 @@ class CareerSkill(models.Model):
         unique_together = ('career', 'skill')
 
 
-# 4. جدول ربط المستخدم بالمسار المهني الذي اختاره كهدف
 class SelectedCareer(models.Model):
-    """يربط كل مستخدم بالمسار المهني الذي اختاره كهدف حالي."""
     user   = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

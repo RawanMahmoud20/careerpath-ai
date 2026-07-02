@@ -8,10 +8,8 @@ from .models import Career, SelectedCareer
 
 @login_required
 def career_list(request):
-    """تعرض كل المسارات المهنية المتاحة، وتحدّد أي واحد مختار حالياً."""
     careers = Career.objects.all().prefetch_related('required_skills')
 
-    # المسار المختار حالياً للمستخدم (إن وُجد)
     selected = SelectedCareer.objects.filter(user=request.user).first()
     selected_id = selected.career_id if selected else None
 
@@ -28,7 +26,7 @@ def choose_career(request, career_id):
     """يختار المستخدم مساراً مهنياً كهدف حالي."""
     career = get_object_or_404(Career, id=career_id)
 
-    # update_or_create: لو عنده مسار سابق يحدّثه، وإلا ينشئ جديد
+    # update_or_create: 
     SelectedCareer.objects.update_or_create(
         user=request.user,
         defaults={'career': career},
