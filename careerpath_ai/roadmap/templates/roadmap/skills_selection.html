@@ -36,49 +36,33 @@
 </div>
 
 <form id="skillsForm">
+  
+  <!-- حلقة للمرور على التصنيفات (Frontend, Backend) -->
+  {% for category in skills_categories %}
   <div class="skills-category-card">
-    <div class="category-title">💻 Frontend Development</div>
+    <div class="category-title">{{ category.category_title }}</div>
+    
     <div class="d-flex flex-wrap">
+      <!-- حلقة للمرور على المهارات داخل كل تصنيف -->
+      {% for skill in category.skills %}
       <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-html" value="html" name="skills">
-        <label for="skill-html" class="skill-label"><span class="skill-icon">🔹</span> HTML5 & CSS3</label>
+        
+        <input type="checkbox" 
+               id="skill-{{ skill.id }}" 
+               value="{{ skill.id }}" 
+               name="skills" 
+               {% if skill.id in user_skills %}checked{% endif %}>
+               
+        <label for="skill-{{ skill.id }}" class="skill-label">
+          <span class="skill-icon">{{ category.icon_style }}</span> {{ skill.name }}
+        </label>
+        
       </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-js" value="javascript" name="skills">
-        <label for="skill-js" class="skill-label"><span class="skill-icon">🔹</span> JavaScript (ES6+)</label>
-      </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-bootstrap" value="bootstrap" name="skills">
-        <label for="skill-bootstrap" class="skill-label"><span class="skill-icon">🔹</span> Bootstrap 5</label>
-      </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-react" value="react" name="skills">
-        <label for="skill-react" class="skill-label"><span class="skill-icon">🔹</span> React.js</label>
-      </div>
+      {% endfor %}
     </div>
+    
   </div>
-
-  <div class="skills-category-card">
-    <div class="category-title">⚙️ Backend & Database</div>
-    <div class="d-flex flex-wrap">
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-python" value="python" name="skills">
-        <label for="skill-python" class="skill-label"><span class="skill-icon">🔸</span> Python</label>
-      </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-django" value="django" name="skills">
-        <label for="skill-django" class="skill-label"><span class="skill-icon">🔸</span> Django Framework</label>
-      </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-sql" value="sql" name="skills">
-        <label for="skill-sql" class="skill-label"><span class="skill-icon">🔸</span> SQL Databases</label>
-      </div>
-      <div class="skill-checkbox-wrapper">
-        <input type="checkbox" id="skill-git" value="git" name="skills">
-        <label for="skill-git" class="skill-label"><span class="skill-icon">🔸</span> Git & GitHub</label>
-      </div>
-    </div>
-  </div>
+  {% endfor %}
 
   <div class="d-flex justify-content-end mt-4">
     <button type="submit" class="btn bg-gradient-custom text-white border-0 px-5 py-2" style="border-radius: 10px; font-weight:600;">
@@ -91,9 +75,7 @@
 {% block extra_js %}
 <script>
   const CSRF_TOKEN = '{{ csrf_token }}';
-  // Direct binding to the new View name added in the same roadmap app
   const SAVE_SKILLS_URL = "{% url 'roadmap:save_skills' %}"; 
 </script>
-<!-- Rawan's edit: changed the script reference to match the actual file name skills.js shown in the tree -->
 <script src="{% static 'js/skills.js' %}"></script>
 {% endblock %}

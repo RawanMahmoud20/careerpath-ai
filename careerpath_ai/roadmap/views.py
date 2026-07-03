@@ -91,3 +91,42 @@ def save_skills(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+@login_required
+def skills_selection(request):
+    """Display the skill selection page for the user"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        user_skills = profile.skills if profile.skills else []
+    except UserProfile.DoesNotExist:
+        user_skills = []
+
+    # تعريف المهارات وتصنيفاتها كبيانات مهيكلة
+    skills_data = [
+        {
+            'category_title': '💻 Frontend Development',
+            'icon_style': '🔹',
+            'skills': [
+                {'id': 'html', 'name': 'HTML5 & CSS3'},
+                {'id': 'javascript', 'name': 'JavaScript (ES6+)'},
+                {'id': 'bootstrap', 'name': 'Bootstrap 5'},
+                {'id': 'react', 'name': 'React.js'},
+            ]
+        },
+        {
+            'category_title': '⚙️ Backend & Database',
+            'icon_style': '🔸',
+            'skills': [
+                {'id': 'python', 'name': 'Python'},
+                {'id': 'django', 'name': 'Django Framework'},
+                {'id': 'sql', 'name': 'SQL Databases'},
+                {'id': 'git', 'name': 'Git & GitHub'},
+            ]
+        }
+    ]
+
+    context = {
+        'user_skills': user_skills,
+        'skills_categories': skills_data # أضفنا تصنيفات المهارات هنا
+    }
+    
+    return render(request, 'roadmap/skills_selection.html', context)
