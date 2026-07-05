@@ -65,17 +65,23 @@
       </button>
 
       <div class="collapse navbar-collapse" id="cpNav">
-        <!-- Center menu links (moved here from the old sidebar) -->
+        <!-- Center menu links — تم تعديل المسارات هنا لتصبح نصية مباشرة لمنع خطأ الـ NoReverseMatch -->
         <div class="mx-auto d-flex align-items-center gap-2 my-3 my-lg-0">
-          <a href="{% url 'dashboard:home' %}" class="cp-nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
+          <a href="/dashboard/" class="cp-nav-link {% if '/dashboard/' in request.path and not 'profile' in request.path %}active{% endif %}">
             <i class="bi bi-grid-1x2 me-1"></i> Dashboard
           </a>
-          <a href="{% url 'roadmap:home' %}" class="cp-nav-link {% if request.resolver_match.app_name == 'roadmap' %}active{% endif %}"><i class="bi bi-map me-1"></i> My Roadmap</a>
-        <a href="{% url 'analysis:home' %}" class="cp-nav-link {% if request.resolver_match.app_name == 'analysis' %}active{% endif %}">
-          <i class="bi bi-graph-up-arrow me-1"></i> Analysis
-        </a>         
-       <a href="{% url 'careers:list' %}" class="cp-nav-link {% if request.resolver_match.app_name == 'careers' %}active{% endif %}"><i class="bi bi-briefcase me-1"></i> Careers</a>
-		  <a href="{% url 'dashboard:profile' %}" class="cp-nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person me-1"></i> Profile</a>
+          <a href="/roadmap/" class="cp-nav-link {% if '/roadmap/' in request.path %}active{% endif %}">
+            <i class="bi bi-map me-1"></i> My Roadmap
+          </a>
+          <a href="/analysis/" class="cp-nav-link {% if '/analysis/' in request.path %}active{% endif %}">
+            <i class="bi bi-graph-up-arrow me-1"></i> Analysis
+          </a>         
+          <a href="/careers/" class="cp-nav-link {% if '/careers/' in request.path %}active{% endif %}">
+            <i class="bi bi-briefcase me-1"></i> Careers
+          </a>
+          <a href="/dashboard/profile/" class="cp-nav-link {% if 'profile' in request.path %}active{% endif %}">
+            <i class="bi bi-person me-1"></i> Profile
+          </a>
         </div>
 
         <!-- Right side: user + logout -->
@@ -85,7 +91,8 @@
                style="width: 34px; height: 34px; font-size: 13px;">
             {{ user.full_name|default:user.email|first|upper }}
           </div>
-          <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 8px; font-size: 13px;">
+          {# التوجيه لمسار تسجيل الخروج المباشر #}
+          <a href="/accounts/logout/" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 8px; font-size: 13px;">
             Logout
           </a>
         </div>

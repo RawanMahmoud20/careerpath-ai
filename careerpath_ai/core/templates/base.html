@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CareerPath AI{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+  {# ===== Top navigation bar — always first, stays pinned to the top ===== #}
+  <nav class="landing-nav">
+    <a href="{% url 'landing' %}" class="logo">🚀 CareerPath AI</a>
+    <div style="display:flex; gap:12px; align-items:center;">
+      {% if user.is_authenticated %}
+        <span style="color:var(--text-muted); font-size:14px;">{{ user.email }}</span>
+        <a href="{% url 'dashboard:home' %}" class="btn-secondary">Dashboard</a>
+        <a href="{% url 'logout' %}" class="btn-secondary">Log out</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn-secondary">Log in</a>
+        <a href="{% url 'signup' %}" class="btn-primary">Get started</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  {# ===== Flash messages — appear BELOW the navbar, never above it ===== #}
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="message message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
