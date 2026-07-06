@@ -1,78 +1,69 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from dashboard.models import UserProfile
-from careers.models import Career, CareerSkill 
 
-# استيراد المهارات وموديل مهارات المستخدم من تطبيقها الجديد
-from skills.models import Skill, UserSkill 
-from .models import CareerTransitionPlan, PlanSkillGap, AIRecommendation
+from careers.models import CareerSkill
+from skills.models import UserSkill
+from .models import UserRoadmap, SkillGap
 
-# 🎯 قاموس الأوزان الذكية لحساب نسبة الجاهزية بدقة هندسية
 LEVEL_WEIGHTS = {
-    'advanced': 1.0,     # المهارة المتقدمة تضاف للحسبة بكامل وزنها
-    'intermediate': 0.7,  # المهارة المتوسطة تعطي جاهزية جزئية بنسبة 70%
-    'beginner': 0.4      # المهارة المبتدئة تعطي جاهزية أولية بنسبة 40%
+    'advanced':     1.0,
+    'intermediate': 0.7,
+    'beginner':     0.4,
 }
+
+
 @login_required
 def skill_gap_analysis(request):
     user = request.user
-    
-    plan = CareerTransitionPlan.objects.filter(user=user).order_by('-created_at').first()
-    ai_rec = AIRecommendation.objects.filter(user=user, recommendation_type='roadmap').order_by('-created_at').first()
-    ai_summary = ai_rec.content if ai_rec else "Our AI has completed the analysis. Explore your roadmap to bridge your level gaps!"
-    
-    career = None
-    perfect_matched = []     # ✅ المهارات المكتملة تماماً (Advanced)
-    skills_to_improve = []   # ⚠️ مهارات يمتلكها ولكن تحتاج لتطوير المستوى
-    missing_skills = []      # ❌ مهارات مفقودة تماماً
-    readiness = 0
-    
-    if plan and plan.target_career:
-        career = plan.target_career
-        
-        # جلب مهارات المستخدم الحالية كموجز: { اسم_المهارة: الكائن بالكامل لقراءة المستوى والاسم }
+
+    roadmap = UserRoadmap.objects.filter(user=user).select_related('career').first()
+
+    career          = roadmap.career if roadmap else None
+    perfect_matched = []
+    skills_to_improve = []
+    missing_skills  = []
+    readiness       = roadmap.readiness_score if roadmap else 0
+    ai_summary      = "Select a career goal first, then complete your skills profile!"
+
+    if roadmap and career:
+        ai_summary = (
+            f"You are {readiness}% ready for {career.title}. "
+            "Review the gaps below and follow your roadmap to close them!"
+        )
+
         user_skills_dict = {
-            us.skill.name: us 
+            us.skill.name: us
             for us in UserSkill.objects.filter(user=user).select_related('skill')
         }
-        
-        career_skills = CareerSkill.objects.filter(career=career).select_related('skill')        
-        total_skills_count = career_skills.count()
-        total_score = 0.0
-        
+
+        career_skills = CareerSkill.objects.filter(career=career).select_related('skill')
+        total         = career_skills.count()
+        score         = 0.0
+
         for cs in career_skills:
-            skill_name = cs.skill.name
-            
-            if skill_name in user_skills_dict:
-                user_skill_obj = user_skills_dict[skill_name]
-                current_level = user_skill_obj.level
-                
-                # إضافة الوزن التراكمي للحسبة
-                total_score += LEVEL_WEIGHTS.get(current_level, 0.4)
-                
-                # التصنيف الهندسي بناءً على المستوى
-                if current_level == 'advanced':
-                    perfect_matched.append(user_skill_obj)
+            name = cs.skill.name
+            if name in user_skills_dict:
+                us_obj = user_skills_dict[name]
+                score += LEVEL_WEIGHTS.get(us_obj.level, 0.4)
+                if us_obj.level == 'advanced':
+                    perfect_matched.append(us_obj)
                 else:
-                    skills_to_improve.append(user_skill_obj)
+                    skills_to_improve.append(us_obj)
             else:
-                # مهارة مفقودة تماماً
-                PlanSkillGap.objects.get_or_create(plan=plan, skill_name=skill_name)
+                SkillGap.objects.get_or_create(roadmap=roadmap, skill_name=name)
                 missing_skills.append({'skill': cs.skill, 'priority': cs.priority})
-        
-        if total_skills_count > 0:
-            readiness = int((total_score / total_skills_count) * 100)
-            if readiness > 100: readiness = 100
-                
-            plan.readiness_score = readiness
-            plan.save()
-            
+
+        if total > 0:
+            readiness = min(int((score / total) * 100), 100)
+            roadmap.readiness_score = readiness
+            roadmap.save(update_fields=['readiness_score'])
+
     context = {
-        'career': career,
-        'ai_summary': ai_summary,
-        'perfect_matched': perfect_matched,
+        'career':           career,
+        'ai_summary':       ai_summary,
+        'perfect_matched':  perfect_matched,
         'skills_to_improve': skills_to_improve,
-        'missing_skills': missing_skills,
-        'readiness': readiness,
+        'missing_skills':   missing_skills,
+        'readiness':        readiness,
     }
     return render(request, 'analysis/skill_gap.html', context)

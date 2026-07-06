@@ -1,22 +1,17 @@
 from django.contrib import admin
-from .models import CareerTransitionPlan, PlanSkillGap, AIRecommendation
+from .models import UserRoadmap, SkillGap
 
-# 1. إنشاء جدول فرعي للفجوات ليظهر داخل صفحة الخطة
-class PlanSkillGapInline(admin.TabularInline):
-    model = PlanSkillGap
+
+class SkillGapInline(admin.TabularInline):
+    model = SkillGap
     extra = 0
-    readonly_fields = ['skill_name']
+    readonly_fields = ['skill_name', 'is_mastered']
 
-# 2. تسجيل خطة الانتقال المهني (هنا فقط) وحشر الفجوات داخلها
-@admin.register(CareerTransitionPlan)
-class CareerTransitionPlanAdmin(admin.ModelAdmin):
-    list_display = ('user', 'target_career', 'readiness_score', 'created_at')
-    list_filter = ('target_career',)
-    search_fields = ('user__email', 'target_career__title')
-    inlines = [PlanSkillGapInline]
 
-# 3. تسجيل توصيات الـ AI
-@admin.register(AIRecommendation)
-class AIRecommendationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recommendation_type', 'created_at')
-    list_filter = ('recommendation_type',)
+@admin.register(UserRoadmap)
+class UserRoadmapAdmin(admin.ModelAdmin):
+    list_display  = ('user', 'career', 'readiness_score', 'generated_at')
+    list_filter   = ('career',)
+    search_fields = ('user__email', 'career__title')
+    readonly_fields = ('generated_at',)
+    inlines = [SkillGapInline]

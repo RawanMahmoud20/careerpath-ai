@@ -1,100 +1,79 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+
 from dashboard.models import UserProfile, UserTaskProgress
 from skills.models import UserSkill
+from careers.models import Career
+from analysis.models import UserRoadmap
+from analysis.roadmap_generator import generate_and_save_roadmap
 
-try:
-    from analysis.models import CareerTransitionPlan, Career
-except ImportError:
-    from careers.models import Career
-    from analysis.models import CareerTransitionPlan
-    
+
 @login_required
 def dashboard(request):
     user = request.user
     profile_obj, _ = UserProfile.objects.get_or_create(user=user)
-    
-    plan = CareerTransitionPlan.objects.filter(user=user).order_by('-created_at').first()
-    
-    target_career = None
-    readiness = 0
+
+    # Single query — one row per user, no ambiguity
+    try:
+        user_roadmap = UserRoadmap.objects.select_related('career').get(user=user)
+        target_career = user_roadmap.career
+        readiness     = user_roadmap.readiness_score or 0
+    except UserRoadmap.DoesNotExist:
+        target_career = None
+        readiness     = 0
+
     matched_count = 0
     missing_count = 0
-    
-    if plan:
-        target_career = plan.target_career
-        readiness = getattr(plan, 'readiness_score', 0) or 0
-        
-        # 🟢 التعديل الجوهري: جلب أسماء المهارات من جدول اليوزر الجديد
-        user_skills = set(UserSkill.objects.filter(user=user).values_list('skill__name', flat=True))
-        
-        if hasattr(target_career, 'required_skills'):
-            try:
-                req_skills_set = set(target_career.required_skills.values_list('name', flat=True))
-            except Exception:
-                req_skills_set = set(getattr(target_career, 'required_skills', []))
-                
-            matched_skills = user_skills.intersection(req_skills_set)
-            missing_skills = req_skills_set.difference(user_skills)
-            
-            matched_count = len(matched_skills)
-            missing_count = len(missing_skills)
-    
-    careers = Career.objects.all()
-    
+
+    if target_career:
+        user_skill_names = set(
+            UserSkill.objects.filter(user=user).values_list('skill__name', flat=True)
+        )
+        req_skill_names = set(
+            target_career.required_skills.values_list('name', flat=True)
+        )
+        matched_count = len(user_skill_names & req_skill_names)
+        missing_count = len(req_skill_names - user_skill_names)
+
     context = {
-        'profile': profile_obj,
+        'profile':       profile_obj,
         'target_career': target_career,
-        'readiness': readiness,
+        'readiness':     readiness,
         'matched_count': matched_count,
         'missing_count': missing_count,
-        'careers': careers,
+        'careers':       Career.objects.all(),
     }
     return render(request, 'dashboard/dashboard.html', context)
+
+
 @login_required
 def select_career(request, career_id):
     if request.method == 'POST':
         try:
-            from analysis.models import CareerTransitionPlan, Career
             career = get_object_or_404(Career, id=career_id)
-            
-            # الفحص العادي والتحديث المباشر بدون تمرير readiness_score لمنع الكراش
-            plan_queryset = CareerTransitionPlan.objects.filter(user=request.user)
-            
-            if plan_queryset.exists():
-                # إذا كانت الخطة موجودة مسبقاً، نقوم بتحديث الكارير فقط
-                plan = plan_queryset.first()
-                plan.target_career = career
-                plan.save()
-            else:
-                # إذا لم تكن موجودة، نقوم بإنشائها وتمرير الحقول الأساسية المؤكدة فقط
-                CareerTransitionPlan.objects.create(
-                    user=request.user,
-                    target_career=career
-                )
-            
-            messages.success(request, f"Successfully selected {career.title} as your target career path!")
+            generate_and_save_roadmap(request.user, career)
+            messages.success(
+                request,
+                f"Career set to {career.title} — your roadmap has been generated!",
+            )
         except Exception as e:
-            messages.error(request, f"Error selecting career: {str(e)}")
-            
+            messages.error(request, f"Error selecting career: {e}")
+
     return redirect('/dashboard/')
+
+
 @login_required
 def profile_view(request):
     user = request.user
-    
-    # جلب أو إنشاء ملف اليوزر الأساسي
-    profile, created = UserProfile.objects.get_or_create(user=user)
-    
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
     if request.method == 'POST':
-        # استقبال البيانات الأساسية من الفورم وحفظها
         user.full_name = request.POST.get('full_name', '')
         user.save()
-        profile.current_field = request.POST.get('current_field', '')
+        profile.current_field    = request.POST.get('current_field', '')
         profile.experience_level = request.POST.get('experience_level', 'beginner')
         profile.save()
-        return redirect('dashboard:profile')        
-    context = {
-        'profile': profile,
-    }
-    return render(request, 'dashboard/profile.html', context)
+        return redirect('dashboard:profile')
+
+    return render(request, 'dashboard/profile.html', {'profile': profile})

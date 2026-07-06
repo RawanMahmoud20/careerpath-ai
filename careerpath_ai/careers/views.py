@@ -3,7 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
-from .models import Career, SelectedCareer
+from .models import Career
+from analysis.models import UserRoadmap
+from analysis.roadmap_generator import generate_and_save_roadmap
 
 
 def career_detail(request, career_id):
@@ -16,27 +18,30 @@ def career_detail(request, career_id):
 def career_list(request):
     careers = Career.objects.all().prefetch_related('required_skills')
 
-    selected = SelectedCareer.objects.filter(user=request.user).first()
-    selected_id = selected.career_id if selected else None
+    # Which career (if any) has the user already selected?
+    try:
+        selected_id = UserRoadmap.objects.get(user=request.user).career_id
+    except UserRoadmap.DoesNotExist:
+        selected_id = None
 
-    context = {
-        'careers': careers,
+    return render(request, 'careers/careers.html', {
+        'careers':     careers,
         'selected_id': selected_id,
-    }
-    return render(request, 'careers/careers.html', context)
+    })
 
 
 @login_required
 @require_POST
 def choose_career(request, career_id):
-    """يختار المستخدم مساراً مهنياً كهدف حالي."""
     career = get_object_or_404(Career, id=career_id)
 
-    # update_or_create: 
-    SelectedCareer.objects.update_or_create(
-        user=request.user,
-        defaults={'career': career},
-    )
+    try:
+        generate_and_save_roadmap(request.user, career)
+        messages.success(
+            request,
+            f'Your target career is now: {career.title} and your roadmap has been generated.',
+        )
+    except Exception as e:
+        messages.warning(request, f'Career selected, but roadmap generation failed: {e}')
 
-    messages.success(request, f'Your target career is now: {career.title}')
     return redirect('dashboard:home')

@@ -4,36 +4,35 @@ from careers.models import Career
 
 User = get_user_model()
 
-class CareerTransitionPlan(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    target_career = models.ForeignKey(Career, on_delete=models.CASCADE)
-    # حقل تخزين نسبة الجاهزية الإجمالية للمستخدم
-    readiness_score = models.IntegerField(default=0, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+class UserRoadmap(models.Model):
+    """
+    Single source of truth for a user's career roadmap.
+    Replaces the old CareerTransitionPlan + AIRecommendation pair.
+
+    - One row per user (OneToOne).
+    - When the user switches careers the row is simply updated in place.
+    - roadmap_json stores the JSON blob (phases / tasks) produced by Gemini.
+    - readiness_score is updated by the Skill-Gap analysis page.
+    """
+    user            = models.OneToOneField(User, on_delete=models.CASCADE, related_name='roadmap')
+    career          = models.ForeignKey(Career, on_delete=models.CASCADE, related_name='roadmaps')
+    readiness_score = models.IntegerField(default=0)
+    roadmap_json    = models.TextField(default='{}')
+    generated_at    = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        # الكود القديم كان: return f"{self.user.username} -> {self.target_career.title}"
-        # الكود الجديد لحذف الاسم تماماً:
-        if self.target_career:
-            return f"Plan for {self.target_career.title}"
-        return f"Plan #{self.id}"
+        return f"{self.user.email} → {self.career.title}"
 
-# الجدول الجديد والذكي لتخزين فجوة المهارات لكل مستخدم وخطة
-class PlanSkillGap(models.Model):
-    plan = models.ForeignKey(CareerTransitionPlan, on_delete=models.CASCADE, related_name='gaps')
-    skill_name = models.CharField(max_length=100) 
+
+class SkillGap(models.Model):
+    """Tracks which skills a user is missing for their target career."""
+    roadmap    = models.ForeignKey(UserRoadmap, on_delete=models.CASCADE, related_name='skill_gaps')
+    skill_name = models.CharField(max_length=100)
     is_mastered = models.BooleanField(default=False)
 
-    def __str__(self):
-        target = self.plan.target_career.title if self.plan.target_career else "No Career"
-        return f"{target} -> {self.skill_name}"
-
-class AIRecommendation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    target_career = models.ForeignKey(Career, on_delete=models.CASCADE)
-    recommendation_type = models.CharField(max_length=50, default='roadmap')
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = ('roadmap', 'skill_name')
 
     def __str__(self):
-        return f"{self.user} | {self.recommendation_type}"
+        return f"{self.roadmap.career.title} → {self.skill_name}"
