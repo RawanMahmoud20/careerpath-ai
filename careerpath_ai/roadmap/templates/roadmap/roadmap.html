@@ -4,11 +4,11 @@
 {% block content %}
 <div class="container">
   {% if not career %}
-    <!-- كرت يعرض في حال لم يقم المستخدم باختيار وظيفة بعد -->
     <div class="card text-center" style="margin-top: 40px; padding: 48px;">
       <div style="font-size:48px; margin-bottom:16px;">🗺️</div>
       <h3>No roadmap generated yet</h3>
-      <p style="color: var(--text-muted);">Please select a target career and complete the skill analysis first.</p>
+      <p style="color: var(--text-muted);">Please select a target career to generate your personalised roadmap.</p>
+      <a href="{% url 'careers:list' %}" class="btn btn-primary" style="margin-top:16px;">Browse Careers</a>
     </div>
   {% else %}
     <div class="page-header">
@@ -17,72 +17,95 @@
     </div>
 
     <!-- Overall progress -->
-    <div class="card" style="margin-bottom:32px;">
+    <div class="card" style="margin-bottom:32px;" id="overall-card">
       <div class="flex-between">
         <h3>Overall progress</h3>
-        <span style="font-size:24px; font-weight:700;" class="gradient-text">{{ overall }}%</span>
+        <span id="overall-pct" style="font-size:24px; font-weight:700;" class="gradient-text">{{ overall }}%</span>
       </div>
-      <div class="progress-bar" style="background: var(--border-color); border-radius: 8px; height: 10px; margin: 12px 0; overflow: hidden;">
-        <div class="progress-fill" style="width: {{ overall }}%; background: linear-gradient(135deg, #4F46E5, #7C3AED); height: 100%;"></div>
+      <div style="background: var(--border-color); border-radius: 8px; height: 10px; margin: 12px 0; overflow: hidden;">
+        <div id="overall-bar" style="width: {{ overall }}%; background: linear-gradient(135deg, #4F46E5, #7C3AED); height: 100%; transition: width 0.4s ease;"></div>
       </div>
-      <p style="font-size:13px; color:var(--text-muted);">
+      <p id="overall-label" style="font-size:13px; color:var(--text-muted);">
         {{ completed_tasks }} of {{ total_tasks }} tasks completed.
       </p>
     </div>
 
     <!-- Phases -->
     {% for pd in phases_data %}
-      <div class="phase" style="margin-bottom: 24px; background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
-        <div class="phase-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div class="phase-card"
+           id="phase-{{ pd.phase.phase_number }}"
+           data-total="{{ pd.total }}"
+           data-completed="{{ pd.completed }}"
+           style="margin-bottom: 24px; background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
           <div style="display:flex; align-items:center; gap: 14px;">
-            <div class="phase-number {% if pd.completed == pd.total and pd.total > 0 %}done{% endif %}" 
-                 style="width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+            <div class="phase-num-circle {% if pd.completed == pd.total and pd.total > 0 %}phase-done{% endif %}"
+                 style="width:32px; height:32px; border-radius:50%; background:#E2E8F0; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0; transition: background 0.3s, color 0.3s;">
               {% if pd.completed == pd.total and pd.total > 0 %}✓{% else %}{{ pd.phase.phase_number }}{% endif %}
             </div>
-            <div class="phase-title-wrap">
-              <div class="phase-title" style="font-weight: 700; font-size: 16px;">{{ pd.phase.title }}</div>
-              <div class="phase-desc" style="font-size: 13px; color: var(--text-muted);">{{ pd.phase.description }}</div>
+            <div>
+              <div style="font-weight:700; font-size:16px;">{{ pd.phase.title }}</div>
+              <div style="font-size:13px; color:var(--text-muted);">{{ pd.phase.description }}</div>
             </div>
           </div>
-          <span class="badge {% if pd.completed == pd.total and pd.total > 0 %}badge-success{% else %}badge-muted{% endif %}">
-            {{ pd.completed }}/{{ pd.total }} done
+          <span class="phase-badge badge {% if pd.completed == pd.total and pd.total > 0 %}badge-success{% else %}badge-muted{% endif %}"
+                style="white-space: nowrap;">
+            <span class="phase-done-count">{{ pd.completed }}</span>/{{ pd.total }} done
           </span>
         </div>
 
-        <div class="tasks" style="display: flex; flex-direction: column; gap: 10px; padding-left: 46px;">
+        <div style="display:flex; flex-direction:column; gap:10px; padding-left:46px;">
           {% for td in pd.tasks %}
-            <div class="task" style="display: flex; align-items: center; gap: 14px; background: var(--bg-site); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-              <div class="task-check {{ td.status }}"
-                   data-task-ref="{{ td.task.task_ref }}"
-                   data-status="{{ td.status }}"
-                   onclick="cycleStatus(this)"
-                   style="cursor: pointer; width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
-                {% if td.status == 'completed' %}✓{% elif td.status == 'in_progress' %}●{% endif %}
-              </div>
-              <div class="task-content" style="flex: 1;">
-                <div class="task-title" style="font-weight: 500; {% if td.status == 'completed' %}text-decoration: line-through; color: var(--text-muted);{% endif %}">{{ td.task.title }}</div>
+            <div class="task-row"
+                 style="display:flex; align-items:center; gap:14px; background:var(--bg-site); padding:12px; border-radius:8px; border:1px solid var(--border-color); transition: opacity 0.2s;">
+
+              <!-- Toggle checkbox -->
+              <button class="task-toggle"
+                      data-task-ref="{{ td.task.task_ref }}"
+                      data-status="{{ td.status }}"
+                      data-phase="{{ pd.phase.phase_number }}"
+                      onclick="cycleStatus(this)"
+                      title="Click to change status"
+                      style="cursor:pointer; width:22px; height:22px; border-radius:5px; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; flex-shrink:0; transition: background 0.25s, border-color 0.25s; background: transparent; padding:0;">
+                {% if td.status == 'completed' %}✓
+                {% elif td.status == 'in_progress' %}●
+                {% endif %}
+              </button>
+
+              <!-- Task text -->
+              <div style="flex:1; min-width:0;">
+                <div class="task-title-text"
+                     style="font-weight:500; {% if td.status == 'completed' %}text-decoration:line-through; color:var(--text-muted);{% endif %} transition: all 0.25s;">
+                  {{ td.task.title }}
+                </div>
                 {% if td.task.description %}
-                  <div class="task-desc" style="font-size: 12px; color: var(--text-muted);">{{ td.task.description }}</div>
+                  <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">{{ td.task.description }}</div>
                 {% endif %}
               </div>
-              <span class="badge task-badge {% if td.status == 'completed' %}badge-success{% elif td.status == 'in_progress' %}badge-warning{% else %}badge-muted{% endif %}">
-                {% if td.status == 'completed' %}Completed{% elif td.status == 'in_progress' %}In progress{% else %}Not started{% endif %}
-              </div>
+
+              <!-- Status badge -->
+              <span class="task-status-badge badge {% if td.status == 'completed' %}badge-success{% elif td.status == 'in_progress' %}badge-warning{% else %}badge-muted{% endif %}"
+                    style="white-space:nowrap; transition: all 0.25s;">
+                {% if td.status == 'completed' %}Completed
+                {% elif td.status == 'in_progress' %}In progress
+                {% else %}Not started{% endif %}
+              </span>
+
+            </div>
           {% endfor %}
         </div>
       </div>
     {% empty %}
-      <div class="card">
-        <p>No roadmap defined for this career yet.</p>
-      </div>
+      <div class="card"><p>No tasks found in this roadmap.</p></div>
     {% endfor %}
 
-    <!-- AI next step -->
-    <div class="ai-box mt-2" style="background: rgba(79, 70, 229, 0.05); border: 1px dashed #4F46E5; padding: 16px; border-radius: 12px; display: flex; gap: 14px; align-items: flex-start;">
-      <div class="ai-icon" style="font-size: 24px;">💡</div>
+    <!-- AI tip -->
+    <div style="background:rgba(79,70,229,0.05); border:1px dashed #4F46E5; padding:16px; border-radius:12px; display:flex; gap:14px; align-items:flex-start; margin-top:8px;">
+      <div style="font-size:24px;">💡</div>
       <div>
-        <h3 style="margin: 0 0 4px 0; font-size: 16px;">Next recommended step</h3>
-        <p style="margin: 0; color: var(--text-muted); font-size: 14px;">{{ next_step }}</p>
+        <h3 style="margin:0 0 4px; font-size:16px;">Next recommended step</h3>
+        <p style="margin:0; color:var(--text-muted); font-size:14px;">{{ next_step }}</p>
       </div>
     </div>
   {% endif %}
@@ -90,50 +113,135 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+  /* ── task toggle button states ── */
+  .task-toggle[data-status="not_started"] {
+    border-color: #cbd5e1;
+    background: transparent;
+    color: transparent;
+  }
+  .task-toggle[data-status="in_progress"] {
+    border-color: #F59E0B;
+    background: #FEF3C7;
+    color: #D97706;
+  }
+  .task-toggle[data-status="completed"] {
+    border-color: #10B981;
+    background: #D1FAE5;
+    color: #059669;
+  }
+  /* pulse animation on click */
+  .task-toggle.clicking {
+    transform: scale(0.85);
+    transition: transform 0.1s;
+  }
+  /* completed row dim */
+  .task-row.is-completed .task-title-text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  /* phase circle done */
+  .phase-num-circle.phase-done {
+    background: #D1FAE5 !important;
+    color: #059669;
+  }
+</style>
+
 <script>
-  const ORDER = ['not_started', 'in_progress', 'completed'];
+const CSRF  = '{{ csrf_token }}';
+const URL   = "{% url 'roadmap:update_progress' %}";
+const ORDER = ['not_started', 'in_progress', 'completed'];
 
-  function getCookie(name) {
-    let value = null;
-    document.cookie.split(';').forEach(c => {
-      const t = c.trim();
-      if (t.startsWith(name + '=')) value = decodeURIComponent(t.slice(name.length + 1));
+const ICONS  = { not_started: '',   in_progress: '●', completed: '✓' };
+const LABELS = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed' };
+const BADGE_CLS = {
+  not_started: 'badge-muted',
+  in_progress: 'badge-warning',
+  completed:   'badge-success',
+};
+
+/* ── counters ────────────────────────────────────────────────── */
+let totalTasks     = parseInt('{{ total_tasks }}') || 0;
+let completedTotal = parseInt('{{ completed_tasks }}') || 0;
+
+function updateOverall() {
+  const pct = totalTasks > 0 ? Math.round((completedTotal / totalTasks) * 100) : 0;
+  document.getElementById('overall-pct').textContent   = pct + '%';
+  document.getElementById('overall-bar').style.width   = pct + '%';
+  document.getElementById('overall-label').textContent =
+    completedTotal + ' of ' + totalTasks + ' tasks completed.';
+}
+
+/* ── main toggle ─────────────────────────────────────────────── */
+async function cycleStatus(btn) {
+  const current  = btn.dataset.status;
+  const next     = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+  const taskRef  = btn.dataset.taskRef;
+  const phaseNum = btn.dataset.phase;
+
+  /* pulse feedback */
+  btn.classList.add('clicking');
+  setTimeout(() => btn.classList.remove('clicking'), 150);
+
+  try {
+    const resp = await fetch(URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': CSRF,
+      },
+      body: `task_ref=${encodeURIComponent(taskRef)}&status=${next}`,
     });
-    return value;
-  }
+    const data = await resp.json();
+    if (!data.ok) return;
 
-  async function cycleStatus(el) {
-    const current = el.dataset.status;
-    const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
-    const taskRef = el.dataset.taskRef;
+    /* ── update toggle button ── */
+    btn.dataset.status  = next;
+    btn.textContent     = ICONS[next];
 
-    try {
-      // 🎯 التعديل هنا: توجيه الـ URL إلى الدالة الفعلية لمشروعك
-      const resp = await fetch("{% url 'roadmap:update_progress' %}", { {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: `task_ref=${encodeURIComponent(taskRef)}&status=${next}`,
-      });
-      const data = await resp.json();
-      if (data.ok || data.success) { // فحص الاستجابة حسب ما يرجعه السيرفر عندك
-        el.dataset.status = next;
-        el.className = 'task-check ' + next;
-        el.textContent = next === 'completed' ? '✓' : (next === 'in_progress' ? '●' : '');
+    /* ── update parent task row ── */
+    const row = btn.closest('.task-row');
+    row.classList.toggle('is-completed', next === 'completed');
 
-        const badge = el.parentElement.querySelector('.task-badge');
-        const labels = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed' };
-        const cls = { not_started: 'badge-muted', in_progress: 'badge-warning', completed: 'badge-success' };
-        badge.textContent = labels[next];
-        badge.className = 'badge task-badge ' + cls[next];
+    const titleEl = row.querySelector('.task-title-text');
+    titleEl.style.textDecoration = next === 'completed' ? 'line-through' : '';
+    titleEl.style.color          = next === 'completed' ? 'var(--text-muted)' : '';
 
-        setTimeout(() => location.reload(), 400);
-      }
-    } catch (err) {
-      console.error('Failed to update progress', err);
+    /* ── update status badge ── */
+    const badge = row.querySelector('.task-status-badge');
+    badge.textContent = LABELS[next];
+    badge.className   = 'task-status-badge badge ' + BADGE_CLS[next];
+
+    /* ── update phase counter ── */
+    const phaseCard = document.getElementById('phase-' + phaseNum);
+    let phaseDone = parseInt(phaseCard.dataset.completed);
+    if (current === 'completed') phaseDone--;          // was completed, now isn't
+    if (next    === 'completed') phaseDone++;          // now becomes completed
+    phaseCard.dataset.completed = phaseDone;
+    const phaseTotal = parseInt(phaseCard.dataset.total);
+
+    phaseCard.querySelector('.phase-done-count').textContent = phaseDone;
+
+    const phaseBadge  = phaseCard.querySelector('.phase-badge');
+    const phaseCircle = phaseCard.querySelector('.phase-num-circle');
+    if (phaseDone === phaseTotal && phaseTotal > 0) {
+      phaseBadge.className  = 'phase-badge badge badge-success';
+      phaseCircle.classList.add('phase-done');
+      phaseCircle.textContent = '✓';
+    } else {
+      phaseBadge.className  = 'phase-badge badge badge-muted';
+      phaseCircle.classList.remove('phase-done');
+      phaseCircle.textContent = phaseNum;
     }
+
+    /* ── update overall counter ── */
+    if (current === 'completed') completedTotal--;
+    if (next    === 'completed') completedTotal++;
+    updateOverall();
+
+  } catch (err) {
+    console.error('Failed to update task progress:', err);
   }
+}
 </script>
 {% endblock %}
