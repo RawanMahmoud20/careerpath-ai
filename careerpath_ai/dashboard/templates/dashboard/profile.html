@@ -1,117 +1,40 @@
 {% extends 'dashboard/base.html' %}
-{% block title %}Profile — CareerPath AI{% endblock %}
+{% block title %}My Profile - CareerPath AI{% endblock %}
 
 {% block content %}
-
-<div class="mb-4">
-  <div style="font-size: 13px; color: #64748B; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; font-weight: 500;">My account</div>
-  <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px; letter-spacing: -0.5px;">My Profile &amp; Skills </h1>
-  <p style="font-size: 15px; color: #64748B; margin-bottom: 0;">Keep your profile and skills up to date for accurate analysis.</p>
-</div>
-
-<div class="row g-4">
-
-  <!-- العمود الرئيسي -->
-  <div class="col-lg-8">
-
-    <!-- بطاقة المعلومات الشخصية -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-      <div class="card-body p-4">
-        <h5 class="ff-sora fw-bold mb-4">Profile information</h5>
-
-        <form method="post" action="{% url 'dashboard:profile' %}">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label" style="font-size: 14px; color: #475569; font-weight: 500;">Full name</label>
-            <input type="text" name="full_name" class="form-control rounded-3"
-                   value="{{ user.full_name }}" placeholder="Your full name"
-                   style="padding: 10px 14px;">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" style="font-size: 14px; color: #475569; font-weight: 500;">Email</label>
-            <input type="email" class="form-control rounded-3" value="{{ user.email }}"
-                   disabled style="padding: 10px 14px; background: #F1F5F9;">
-            <small class="text-muted" style="font-size: 12px;">Email can't be changed.</small>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" style="font-size: 14px; color: #475569; font-weight: 500;">Current field / background</label>
-            <input type="text" name="current_field" class="form-control rounded-3"
-                   value="{{ profile.current_field }}" placeholder="e.g. Accounting, Marketing, Student"
-                   style="padding: 10px 14px;">
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label" style="font-size: 14px; color: #475569; font-weight: 500;">Experience level</label>
-            <select name="experience_level" class="form-select rounded-3" style="padding: 10px 14px;">
-              <option value="beginner"     {% if profile.experience_level == 'beginner' %}selected{% endif %}>Beginner</option>
-              <option value="intermediate" {% if profile.experience_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
-              <option value="advanced"     {% if profile.experience_level == 'advanced' %}selected{% endif %}>Advanced</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn bg-gradient-custom text-white px-4 border-0 btn-custom-primary rounded-3" style="font-weight: 500;">
-            Save profile
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- بطاقة إضافة المهارات (توديك لصفحة روان) -->
-    <div class="card border-0 shadow-sm rounded-4">
-      <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div>
-          <h5 class="ff-sora fw-bold mb-1">Manage your skills</h5>
-          <p class="text-muted mb-0" style="font-size: 14px;">Select the skills you already have to power your gap analysis.</p>
-        </div>
-        <a href="{% url 'roadmap:skills_selection' %}" class="btn bg-gradient-custom text-white px-4 border-0 btn-custom-primary rounded-3" style="font-weight: 500; white-space: nowrap;">
-          <i class="bi bi-plus-lg me-1"></i> Add / edit skills
-        </a>
-      </div>
-    </div>
-
+<div class="container-narrow">
+  <div class="page-header">
+    <h1 class="page-title">My Profile</h1>
+    <p class="page-subtitle">Keep your personal and background information up to date</p>
   </div>
 
-  <!-- القائمة الجانبية (زي تصميمي الأصلي) -->
-  <div class="col-lg-4">
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-      <div class="card-body p-4 text-center">
-        <div class="bg-gradient-custom text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-             style="width: 72px; height: 72px; font-size: 30px;">
-          {{ user.full_name|default:user.email|first|upper }}
-        </div>
-        <h6 class="ff-sora fw-bold mb-1">{{ user.full_name|default:"No name yet" }}</h6>
-        <p class="text-muted mb-0" style="font-size: 13px;">{{ user.email }}</p>
-        {% if profile.current_field %}
-          <span class="badge bg-light text-secondary border mt-2 fw-normal" style="font-size: 12px;">{{ profile.current_field }}</span>
-        {% endif %}
+  <!-- Profile Information Card -->
+  <div class="card" style="margin-bottom:32px;">
+    <h3 style="margin-bottom:20px;">Profile information</h3>
+    <form method="post" action="{% url 'dashboard:profile' %}">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ request.user.full_name }}">
       </div>
-    </div>
-
-    <div class="card border-0 shadow-sm rounded-4">
-      <div class="card-body p-4">
-        <h6 class="ff-sora fw-bold mb-3" style="font-size: 14px;">Current skills {% if profile.skills %}({{ profile.skills|length }}){% endif %}</h6>
-        {% if profile.skills %}
-          {% for skill in profile.skills %}
-            <span class="badge bg-light text-secondary border me-1 mb-1 fw-normal" style="font-size: 12px;">{{ skill }}</span>
-          {% endfor %}
-        {% else %}
-          <p class="text-muted mb-0" style="font-size: 13px;">No skills yet. Click "Add / edit skills" to get started.</p>
-        {% endif %}
-
-        {% if plan %}
-        <hr class="my-3">
-        <h6 class="ff-sora fw-bold mb-2" style="font-size: 14px;">Target career</h6>
-        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
-           {{ plan.target_career.title }}
-        </span>
-        {% endif %}
+      
+      <div class="form-group">
+        <label for="current_field">Current field / background</label>
+        <input type="text" id="current_field" name="current_field" class="form-control" value="{{ profile.current_field }}" placeholder="e.g. Accounting">
       </div>
-    </div>
+      
+      <div class="form-group">
+        <label for="experience_level">Experience level</label>
+        <select id="experience_level" name="experience_level" class="form-control">
+          <option value="beginner" {% if profile.experience_level == 'beginner' %}selected{% endif %}>Beginner</option>
+          <option value="intermediate" {% if profile.experience_level == 'intermediate' %}selected{% endif %}>Intermediate</option>
+          <option value="advanced" {% if profile.experience_level == 'advanced' %}selected{% endif %}>Advanced</option>
+        </select>
+      </div>
+      
+      <button type="submit" class="btn-primary">Save profile</button>
+    </form>
   </div>
-
 </div>
-
 {% endblock %}

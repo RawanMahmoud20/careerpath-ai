@@ -1,212 +1,70 @@
 {% extends 'dashboard/base.html' %}
-{% block title %}Dashboard — CareerPath AI{% endblock %}
+{% block title %}Dashboard - CareerPath AI{% endblock %}
 
 {% block content %}
+<div class="container">
 
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <div>
-    <div style="font-size: 13px; color: #64748B; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; font-weight: 500;">Welcome back</div>
-    <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px; letter-spacing: -0.5px;">Good to see you, {{ user.full_name|default:user.email }}</h1>
-    <p style="font-size: 15px; color: #64748B; margin-bottom: 0;">Here's where you stand on your career transition.</p>
+  <div class="welcome-banner">
+<h1>Welcome, {{ request.user.full_name|default:user.username }}! 👋</h1>
+    {% if target_career %}
+      <p>You're on your way to becoming a {{ target_career.title }}.</p>
+      <div class="progress-bar on-dark" style="max-width:320px;">
+        <div class="progress-fill" style="width: {{ readiness }}%;"></div>
+      </div>
+      <p style="font-size:14px; margin-top:8px;">You've matched {{ readiness }}% of the required skills.</p>
+    {% else %}
+      <p>Choose a target career below to get your personalized skill-gap analysis and roadmap.</p>
+    {% endif %}
   </div>
-  {% if plan %}
-  <a href="{% url 'roadmap:home' %}" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
-    <i class="bi bi-map me-2"></i> Continue Roadmap
-  </a>
-  {% else %}
-  <a href="{% url 'careers:list' %}" class="btn bg-gradient-custom text-white px-4 py-2 border-0 btn-custom-primary d-flex align-items-center" style="border-radius: 10px; font-weight: 500; height: 42px; font-size: 14px;">
-    <i class="bi bi-plus-lg me-2"></i> Choose a Career
-  </a>
+
+  {% if target_career %}
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-number">{{ matched_count }}</div>
+      <div class="stat-label">Skills you have</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-number">{{ missing_count }}</div>
+      <div class="stat-label">Skills to learn</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🚀</div>
+      <div class="stat-number">{{ readiness }}%</div>
+      <div class="stat-label">Job readiness</div>
+    </div>
+  </div>
+
+  <div class="mt-2" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+    <a href="/analysis/" class="btn-primary">View skill-gap analysis</a>
+    <a href="/roadmap/" class="btn-secondary">Open my roadmap</a>
+</div>
   {% endif %}
-</div>
 
-<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <div class="ff-sora fw-bold text-dark" style="font-size: 16px;">📋 My Career Transition Tasks</div>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="border-color: #F1F5F9;">
-      <thead class="table-light" style="font-size: 13px; color: #64748B;">
-        <tr>
-          <th>Task Reference</th>
-          <th>Status</th>
-          <th class="text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody style="font-size: 14.5px;">
-        {% for task in user_tasks|default:all_progress %}
-        <tr data-task-ref="{{ task.task_ref }}">
-          <td class="fw-medium text-dark">{{ task.task_ref }}</td>
-          <td>
-            <span class="badge status-badge rounded-pill px-3 py-1.5 
-              {% if task.status == 'completed' %}bg-success-subtle text-success
-              {% elif task.status == 'in_progress' %}bg-warning-subtle text-warning-emphasis
-              {% else %}bg-secondary-subtle text-secondary{% endif %}">
-              {{ task.get_status_display|default:task.status }}
-            </span>
-          </td>
-          <td>
-            <div class="d-flex justify-content-center gap-1">
-              <select class="form-select form-select-sm task-status-select" style="max-width: 150px; border-radius: 8px; font-size: 13px;">
-                <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>Not Started</option>
-                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-              </select>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="3" class="text-center py-4 text-muted">No tasks assigned yet. Your tasks will appear once your roadmap is ready!</td>
-        </tr>
+  <h2 class="section-title">{% if target_career %}Explore other paths{% else %}Choose a career path{% endif %}</h2>
+  <div class="grid" style="grid-template-columns: repeat(2, 1fr); gap: 24px;">
+    {% for career in careers %}
+    <div class="career-card">
+      <div class="career-icon">{{ career.icon }}</div>
+      <div class="career-title">{{ career.title }}</div>
+      <div class="career-desc">{{ career.description|truncatewords:16 }}</div>
+      <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
+      <div class="skill-tags">
+        {% for skill in career.required_skills.all|slice:":3" %}
+          <span class="skill-tag">{{ skill.name }}</span>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="bg-white border p-4 h-100 shadow-sm cp-card-hover" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div style="font-size: 12px; color: #64748B; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 500;">Readiness</div>
-      <div class="text-gradient-custom ff-sora fw-bold" style="font-size: 36px; line-height: 1;">
-        <!-- تم حل مشكلة ظهور النسبة فارغة هنا بوضع قيمة 0 كقيمة افتراضية -->
-        {% if plan %}{{ plan.readiness_score|default:"0" }}%{% else %}—{% endif %}
       </div>
-      <div style="font-size: 13px; color: #64748B; margin-top: 4px;">
-        {% if plan %}{{ plan.target_career.title }}{% else %}No career selected{% endif %}
-      </div>
-      {% if plan %}
-      <div class="progress rounded-pill mt-3" style="height: 6px; background-color: #F1F5F9;">
-        <div class="progress-bar bg-gradient-custom rounded-pill" role="progressbar" style="width: {{ plan.readiness_score|default:'0' }}%;"></div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="bg-white border p-4 h-100 shadow-sm cp-card-hover" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div style="font-size: 12px; color: #64748B; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 500;">Tasks Done</div>
-      <div class="ff-sora fw-bold" style="font-size: 36px; color: #10B981; line-height: 1;">
-        {{ completed_tasks|default:"0" }}
-      </div>
-      <div style="font-size: 13px; color: #64748B; margin-top: 4px;">of {{ total_tasks|default:"0" }} total tasks</div>
-      <div class="progress rounded-pill mt-3" style="height: 6px; background-color: #F1F5F9;">
-        <div class="progress-bar rounded-pill" role="progressbar" style="width: {{ progress_pct|default:'0' }}%; background-color: #10B981 !important;"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="bg-white border p-4 h-100 shadow-sm cp-card-hover" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div style="font-size: 12px; color: #64748B; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 500;">In Progress</div>
-      <div class="ff-sora fw-bold" style="font-size: 36px; color: #F59E0B; line-height: 1;">
-        {{ inprog_tasks|default:"0" }}
-      </div>
-      <div style="font-size: 13px; color: #64748B; margin-top: 4px;">active tasks</div>
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="bg-white border p-4 h-100 shadow-sm cp-card-hover" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div style="font-size: 12px; color: #64748B; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 500;">Overall Progress</div>
-      <div class="text-gradient-custom ff-sora fw-bold" style="font-size: 36px; line-height: 1;">
-        {{ progress_pct|default:"0" }}%
-      </div>
-      <div style="font-size: 13px; color: #64748B; margin-top: 4px;">roadmap complete</div>
-      <div class="progress rounded-pill mt-3" style="height: 6px; background-color: #F1F5F9;">
-        <div class="progress-bar bg-gradient-custom rounded-pill" role="progressbar" style="width: {{ progress_pct|default:'0' }}%;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3">
-  <!-- AI Recommendation Card -->
-  <div class="col-md-7">
-    <div class="bg-white border p-4 h-100 shadow-sm" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div class="ff-sora fw-bold text-dark mb-3" style="font-size: 16px;">🤖 Latest AI Recommendation</div>
-      
-      {% if latest_ai %}
-      <!-- الحالة الأولى: يوجد نص توصية مخرّن فعلياً -->
-      <div class="p-4 border" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(124, 58, 237, 0.04)); border-color: rgba(79, 70, 229, 0.12) !important; border-radius: 12px;">
-        <div style="font-size: 11px; color: #4F46E5; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-weight: 600;">
-          ✦ AI Insight
-        </div>
-        <p style="font-size: 15px; line-height: 1.7; margin: 0; color: #0F1419;">
-          {{ latest_ai.content }}
-        </p>
-      </div>
-      <div class="d-flex gap-2 mt-3">
-        <a href="{% url 'analysis:skill_gap' plan.target_career.id %}" class="btn btn-sm btn-outline-primary px-3 rounded-2" style="font-size: 13px; font-weight: 500;">
-          Full Analysis →
-        </a>
-      </div>
-      
-      {% elif plan %}
-      <!-- الحالة الثانية (حالتك الحالية في الصورة): المستخدم اختار وظيفة فعلاً لكن لا توجد توصية مختصرة بعد في لوحة التحكم -->
-      <div class="text-center py-5" style="color: #64748B;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
-        <div style="font-size: 15px; font-weight: 500; margin-bottom: 6px; color: #0F1419;">Analysis Ready for {{ plan.target_career.title }}</div>
-        <div style="font-size: 13px; margin-bottom: 16px;">Your personalized skill-gap analysis is prepared. Click below to view.</div>
-        <a href="{% url 'analysis:home' %}" class="btn btn-sm bg-gradient-custom text-white px-3 border-0 btn-custom-primary" style="border-radius: 8px;">View Analysis →</a>
-      </div>
-
-      {% else %}
-      {% comment %}case 3:  if not chosen any career {% endcomment %}
-      <div class="text-center py-5" style="color: #64748B;">
-        <div style="font-size: 32px; margin-bottom: 12px;">🤖</div>
-        <div style="font-size: 15px; font-weight: 500; margin-bottom: 6px; color: #0F1419;">No analysis yet</div>
-        <div style="font-size: 13px; margin-bottom: 16px;">Choose a target career to get your AI recommendations.</div>
-        <a href="{% url 'careers:list' %}" class="btn btn-sm bg-gradient-custom text-white px-3 border-0 btn-custom-primary" style="border-radius: 8px;">Explore Careers →</a>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Roadmap Preview Card -->
-  <div class="col-md-5">
-    <div class="bg-white border p-4 h-100 shadow-sm" style="border-color: #E2E8F0 !important; border-radius: 16px;">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <div class="ff-sora fw-bold text-dark" style="font-size: 16px;">🗺️ Roadmap</div>
-        <a href="{% url 'roadmap:home' %}" style="font-size: 13px; color: #4F46E5; font-weight: 500; text-decoration: none;">
-          View all →
-        </a>
-      </div>
-
-      {% if plan %}
-        <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span style="font-size: 13px; font-weight: 600; color: #0F1419;">Overall</span>
-            <span style="font-size: 13px; color: #64748B;">{{ progress_pct|default:"0" }}%</span>
-          </div>
-          <div class="progress rounded-pill" style="height: 6px; background-color: #F1F5F9;">
-            <div class="progress-bar bg-gradient-custom rounded-pill" role="progressbar" style="width: {{ progress_pct|default:'0' }}%;"></div>
-          </div>
-        </div>
-
-        <div class="p-3 border-0 mb-3" style="background-color: rgba(79, 70, 229, 0.05); border-radius: 10px;">
-          <div style="font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 500;">Target</div>
-          <div style="font-weight: 600; font-size: 15px; color: #0F1419;">📊 {{ plan.target_career.title }}</div>
-        </div>
-
-        <div class="d-flex gap-2 flex-wrap">
-          <span class="badge rounded-pill px-3 py-2 text-success" style="background-color: rgba(16, 185, 129, 0.1); font-size: 12px; font-weight: 500;">✓ {{ completed_tasks|default:"0" }} done</span>
-          <span class="badge rounded-pill px-3 py-2 text-warning" style="background-color: rgba(245, 158, 11, 0.1); font-size: 12px; font-weight: 500;">⟳ {{ inprog_tasks|default:"0" }} in progress</span>
-        </div>
-
-        <a href="{% url 'roadmap:home' %}" class="btn w-100 bg-gradient-custom text-white py-2 border-0 btn-custom-primary mt-3" style="border-radius: 10px; font-weight: 500; height: 40px; font-size: 14px;">
-          <i class="bi bi-map me-2"></i> Open Roadmap
-        </a>
-      {% else %}
-        <div class="text-center py-4" style="color: #64748B;">
-          <div style="font-size: 28px; margin-bottom: 10px;">🗺️</div>
-          <div style="font-size: 14px; margin-bottom: 16px;">Your roadmap will appear here after you select a career.</div>
-          <a href="{% url 'careers:list' %}" class="btn btn-sm bg-gradient-custom text-white px-3 border-0 btn-custom-primary" style="border-radius: 8px;">Get Started →</a>
-        </div>
-      {% endif %}
-    </div>
+<form method="post" action="/dashboard/select-career/{{ career.id }}/">
+          {% csrf_token %}
+        <button type="submit" class="btn-primary btn-full">
+          {% if career == target_career %}✓ Current target{% else %}Choose this path{% endif %}
+        </button>
+      </form>
+<a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>    </div>
+    {% empty %}
+    <p>No careers yet. Run <code>python manage.py seed_data</code>.</p>
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

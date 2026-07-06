@@ -1,78 +1,79 @@
 /**
  * CareerPath AI - Roadmap Interactive Logic
- * toggle task status and update via AJAX 
+ * Cycle task status (Not Started -> In Progress -> Completed) directly on click
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-//   close any open status menu when clicking outside of task cards
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.task-card')) {
-            document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
-        }
+async function cycleStatusDirectly(cardElement, taskRef) {
+  // 1. تحديد الحالة الحالية للبطاقة
+  let currentStatus = "not_started";
+  if (cardElement.classList.contains("status-completed"))
+    currentStatus = "completed";
+  else if (cardElement.classList.contains("status-in_progress"))
+    currentStatus = "in_progress";
+
+  // 2. تحديد الحالة الجديدة بشكل دائري
+  let newStatus = "in_progress";
+  if (currentStatus === "in_progress") newStatus = "completed";
+  if (currentStatus === "completed") newStatus = "not_started";
+
+  // 3. تحديث الواجهة فوراً (Optimistic UI) لمنع التقطيع
+  cardElement.classList.remove(
+    "status-not_started",
+    "status-in_progress",
+    "status-completed",
+  );
+  cardElement.classList.add("status-" + newStatus);
+
+  const checkEl = cardElement.querySelector(".task-check");
+  if (checkEl) {
+    checkEl.textContent =
+      newStatus === "completed" ? "✓" : newStatus === "in_progress" ? "⟳" : "";
+  }
+
+  // 4. إرسال البيانات عبر Fetch API إلى الـ Backend
+  try {
+    const response = await fetch(UPDATE_TASK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": CSRF_TOKEN,
+      },
+      body: JSON.stringify({ task_ref: taskRef, status: newStatus }),
     });
-});
 
-// using data-ref attribute to identify the task card and its corresponding menu
-function toggleStatusMenu(card) {
-    const ref = card.dataset.ref;
-    const menuId = 'menu-' + ref.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const menu = document.getElementById(menuId);
-    if (!menu) return;
+    const data = await response.json();
 
-    document.querySelectorAll('.status-menu.open').forEach(m => {
-        if (m !== menu) m.classList.remove('open');
-    });
-    menu.classList.toggle('open');
-}
+    if (data.success) {
+      const labels = {
+        completed: "✓ Marked complete successfully! ✨",
+        in_progress: "⟳ Task is now In Progress",
+        not_started: "Task reset to not started",
+      };
 
-// send the new status to the backend and update the UI optimistically
-function setStatus(e, taskRef, newStatus) {
-    e.stopPropagation();  // not allow the click to bubble up to the card and close the menu
-    document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
+      // استدعاء التنبيه المخصص إذا كان موجوداً
+      if (typeof showToast === "function") {
+        showToast(labels[newStatus] || "Updated successfully");
+      }
 
-    const cardId = 'task-' + taskRef.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    const card = document.getElementById(cardId);
-    if (!card) return;
+      // تحديث الصفحة لضمان دقة أشرطة التقدم (Progress Bars) من السيرفر
+      // يمكنك إزالة هذا السطر إذا كنت تفضل التحديث عبر JS فقط دون عمل Reload
+      window.location.reload();
+    } else {
+      // إرجاع الواجهة للحالة القديمة في حال الفشل
+      cardElement.classList.remove("status-" + newStatus);
+      cardElement.classList.add("status-" + currentStatus);
 
-    // preventing flicker by removing all status classes first
-    card.classList.remove('status-not_started', 'status-in_progress', 'status-completed');
-    card.classList.add('status-' + newStatus);
-
-    const checkEl = card.querySelector('.task-check');
-    if (checkEl) {
-        checkEl.textContent = newStatus === 'completed' ? '✓' : newStatus === 'in_progress' ? '⟳' : '';
+      if (typeof showToast === "function") {
+        showToast("❌ Failed to update: " + (data.error || "Server error"));
+      }
     }
+  } catch (error) {
+    // إرجاع الواجهة للحالة القديمة في حال انقطاع الاتصال
+    cardElement.classList.remove("status-" + newStatus);
+    cardElement.classList.add("status-" + currentStatus);
 
-    // sending data via Fetch API to the enhanced Back-end
-    fetch(UPDATE_TASK_URL, {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json', 
-            'X-CSRFToken': CSRF_TOKEN 
-        },
-        body: JSON.stringify({ task_ref: taskRef, status: newStatus }),
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            const labels = {
-                completed: '✓ Marked complete successfully! ✨',
-                in_progress: '⟳ Task is now In Progress',
-                not_started: 'Task reset to not started'
-            };
-            // calling your custom toast notification function defined in base.html
-            if (typeof showToast === 'function') {
-                showToast(labels[newStatus] || 'Updated successfully');
-            }
-        } else {
-            if (typeof showToast === 'function') {
-                showToast('❌ Failed to update: ' + (data.error || 'Server error'));
-            }
-        }
-    })
-    .catch(() => {
-        if (typeof showToast === 'function') {
-            showToast('❌ Error in saving — please check internet connection');
-        }
-    });
+    if (typeof showToast === "function") {
+      showToast("❌ Error in saving — please check internet connection");
+    }
+  }
 }

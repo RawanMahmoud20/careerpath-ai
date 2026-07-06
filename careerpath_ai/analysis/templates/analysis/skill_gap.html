@@ -1,65 +1,90 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
-
-{% block title %}Skill Gap — {{ career.title }}{% endblock %}
+{% block title %}Skill Gap Analysis - CareerPath AI{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-  <div style="font-size:13px; color:#64748B; text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; font-weight:500;">Step 2: Skill Gap Analysis</div>
-  <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px;">{{ career.title }}</h1>
-  <p style="font-size:15px; color:#64748B; margin-bottom:0;">Here's how your current skills match up.</p>
-</div>
-
-<!-- Match % -->
-<div class="p-4 mb-4 text-white bg-gradient-custom shadow-sm" style="border-radius: 16px;">
-  <div class="row align-items-center g-3">
-    <div class="col-auto">
-      <h1 class="fw-bold ff-sora mb-0" style="font-size: 48px;">{{ match_pct }}%</h1>
-    </div>
-    <div class="col">
-      <div class="fw-semibold mb-2">Skill Match for {{ career.title }}</div>
-      <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.25); border-radius: 999px;">
-        <div class="progress-bar bg-white" role="progressbar" style="width: {{ match_pct }}%; border-radius: 999px;"></div>
-      </div>
-      <div class="small mt-2" style="opacity:.8;">{{ matched_skills|length }} of {{ matched_skills|length|add:missing_skills|length }} skills matched</div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-4 mb-4">
-  <!-- Matched -->
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100" style="border-radius:16px;">
-      <div class="card-body p-4">
-        <h6 class="fw-bold text-success mb-3">✅ Skills You Have</h6>
-        {% for skill in matched_skills %}
-        <span class="badge bg-success-subtle text-success px-3 py-2 me-2 mb-2" style="border-radius:8px; font-size:13px;">{{ skill }}</span>
-        {% empty %}
-        <p class="text-muted small">No matching skills yet.</p>
-        {% endfor %}
-      </div>
-    </div>
+<div class="container">
+  <div class="page-header">
+    <p class="page-subtitle">Skill gap analysis for</p>
+    <h1 class="page-title">{{ career.icon }} {{ career.title }}</h1>
   </div>
 
-  <!-- Missing -->
-  <div class="col-md-6">
-    <div class="card border-0 shadow-sm h-100" style="border-radius:16px;">
-      <div class="card-body p-4">
-        <h6 class="fw-bold text-danger mb-3">❌ Skills You Need</h6>
-        {% for skill in missing_skills %}
-        <span class="badge bg-danger-subtle text-danger px-3 py-2 me-2 mb-2" style="border-radius:8px; font-size:13px;">{{ skill }}</span>
-        {% empty %}
-        <p class="text-success small">🎉 You have all required skills!</p>
-        {% endfor %}
-      </div>
+  <!-- AI Summary -->
+  <div class="ai-box">
+    <div class="ai-icon">🤖</div>
+    <div>
+      <h3>AI summary</h3>
+      <p>{{ ai_summary }}</p>
     </div>
   </div>
-</div>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+  
+  <!-- 1. المهارات المكتملة تماماً (Mastered Skills) -->
+  <div>
+    <h3 class="section-title" style="margin-top:0;">✅ Mastered skills ({{ perfect_matched|length }})</h3>
+    {% for us in perfect_matched %}
+      <div class="skill-item have" style="margin-bottom:10px; border-left: 4px solid #10B981;">
+        <span class="skill-name"><strong>{{ us.skill.name }}</strong></span>
+        <span class="badge badge-success">{{ us.get_level_display }}</span>
+      </div>
+    {% empty %}
+      <p style="color:var(--text-muted); font-size: 14px;">No fully mastered skills yet.</p>
+    {% endfor %}
+  </div>
 
-<!-- Generate Roadmap Button -->
-<div class="text-center mt-4">
-  <a href="{% url 'roadmap:home' %}" class="btn bg-gradient-custom text-white border-0 px-5 py-3" style="border-radius:12px; font-size:16px; font-weight:600;">
-    🗺️ Generate My Roadmap →
-  </a> 
+  <!-- 2. مهارات تمتلكها ولكن بحاجة لتطوير وترقية المستوى (Skills to Improve) -->
+  <div>
+    <h3 class="section-title" style="margin-top:0;">⚠️ Skills to improve ({{ skills_to_improve|length }})</h3>
+    {% for us in skills_to_improve %}
+      <div class="skill-item need" style="margin-bottom:10px; border-left: 4px solid #F59E0B; background: rgba(245, 158, 11, 0.02);">
+        <span class="skill-name"><strong>{{ us.skill.name }}</strong></span>
+        <!-- نستخدم لفل اليوزر الحالي كبادج ملون بالأصفر أو الـ warning -->
+        <span class="badge" style="background: #FFFBEB; color: #B45309; border: 1px solid #F59E0B;">
+          {{ us.get_level_display }} · Upgrade
+        </span>
+      </div>
+    {% empty %}
+      <p style="color:var(--text-muted); font-size: 14px;">No skills need upgrading! 🎉</p>
+    {% endfor %}
+  </div><!-- 3. المهارات المفقودة تماماً (Missing Skills) -->
+  <div>
+    <h3 class="section-title" style="margin-top:0;">📚 Skills you need ({{ missing_skills|length }})</h3>
+    {% for item in missing_skills %}
+      <div class="skill-item need" style="margin-bottom:10px;">
+        <span class="skill-name">{{ item.skill.name }}</span>
+        <span class="badge badge-{% if item.priority == 'high' %}high{% elif item.priority == 'medium' %}medium{% else %}muted{% endif %}">
+          {{ item.priority|capfirst }} priority
+        </span>
+      </div>
+    {% empty %}
+      <!-- الفحص الذكي بالإنجليزية لمنع التناقض البصري -->
+      {% if skills_to_improve %}
+        <p style="color:var(--text-muted); font-size: 14px;">
+          💡 No missing skills! Focus on upgrading your current skills in the adjacent column to reach full job readiness.
+        </p>
+      {% else %}
+        <p style="color:var(--text-muted); font-size: 14px;">
+          You've got all the required skills and mastered them! 🎉
+        </p>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+</div>
+  <!-- Progress -->
+  <div class="card mt-2">
+    <div class="flex-between">
+      <h3>Progress to job readiness</h3>
+      <span style="font-size:24px; font-weight:700;" class="gradient-text">{{ readiness }}%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: {{ readiness }}%;"></div>
+    </div>
+    <p style="font-size:13px; color:var(--text-muted);">
+      You've mastered {{ readiness }}% of the required skills for this role.
+    </p>
+  </div>
+
+  <div class="text-center mt-2">
+<a href="/roadmap/" class="btn-primary">Get my personalized roadmap →</a>  </div>
 </div>
 {% endblock %}

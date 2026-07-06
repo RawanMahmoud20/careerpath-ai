@@ -1,181 +1,139 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
-
-{% block title %}My Roadmap — CareerPath AI{% endblock %}
-
-{% block extra_css %}
-<style>
-  .phase-block { margin-bottom: 36px; }
-  .phase-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .phase-num {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700;
-    flex-shrink: 0;
-  }
-  .phase-num.locked { background: #E5E7EB; color: #64748B; }
-
-  .task-card {
-    display: flex; align-items: center; gap: 14px;
-    background: #ffffff; border: 1px solid #E2E8F0;
-    border-radius: 12px; padding: 14px 18px;
-    margin-bottom: 8px; cursor: pointer;
-    position: relative;
-    transition: all .2s; user-select: none;
-  }
-  .task-card:hover { border-color: rgba(79,70,229,0.3); box-shadow: 0 4px 12px rgba(79,70,229,0.08); }
-  .task-card.status-completed  { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.04); }
-  .task-card.status-in_progress { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
-
-  .task-check {
-    width: 24px; height: 24px; border-radius: 7px; border: 2px solid #E2E8F0;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 13px; transition: all .2s; background: #ffffff;
-  }
-  .status-completed .task-check  { background: linear-gradient(135deg, #4F46E5, #7C3AED); border-color: transparent; color: #fff; }
-  .status-in_progress .task-check { background: rgba(245,158,11,0.1); border-color: #F59E0B; color: #F59E0B; }
-
-  .task-title { font-size: 14px; font-weight: 500; color: #0F1419; }
-  .status-completed .task-title { text-decoration: line-through; color: #64748B; }
-  .task-meta { font-size: 12px; color: #64748B; margin-left: auto; white-space: nowrap; }
-
-  .status-menu {
-    display: none; position: absolute; right: 20px; top: 80%;
-    background: #ffffff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 6px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100; min-width: 160px;
-  }
-  .status-menu.open { display: block; }
-  .status-option {
-    padding: 8px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; gap: 8px; transition: background .15s; color: #0F1419;
-  }
-  .status-option:hover { background: rgba(79,70,229,0.07); }
-
-  .ai-nudge {
-    background: rgba(79,70,229,0.06); border: 1px solid rgba(79,70,229,0.15);
-    border-radius: 12px; padding: 16px 20px; font-size: 14px; line-height: 1.6; color: #0F1419; margin-top: 28px;
-  }
-</style>
-{% endblock %}
+{% block title %}My Roadmap - CareerPath AI{% endblock %}
 
 {% block content %}
-
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <div>
-    <div style="font-size:13px; color:#64748B; text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; font-weight:500;">AI-Generated</div>
-    <h1 class="ff-sora fw-bold text-dark mb-1" style="font-size: 28px;">
-      My Roadmap {% if plan %}<span class="text-gradient-custom">— {{ plan.target_career.title }}</span>{% endif %}
-    </h1>
-    <p style="font-size:15px; color:#64748B; margin-bottom:0;">Click any task to update your progress.</p>
-  </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">✓ {{ all_done }} done</span>
-    <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">{{ all_tasks }} total tasks</span>
-  </div>
-</div>
-
-{% if not plan %}
-<div class="card border-0 shadow-sm text-center py-5 px-4" style="border-radius: 16px;">
-  <div style="font-size:48px;margin-bottom:16px;">🗺️</div>
-  <h4 class="fw-bold text-dark">No roadmap yet</h4>
-  <p class="text-muted mb-4">Choose a career and run the analysis to generate your personalized roadmap.</p>
-  <div class="d-flex justify-content-center">
-    <a href="#" class="btn bg-gradient-custom text-white border-0 px-4 py-2" style="border-radius: 10px;">Explore Careers →</a>
-  </div>
-</div>
-
-{% else %}
-
-<div class="p-4 mb-4 text-white bg-gradient-custom shadow-sm" style="border-radius: 16px;">
-  <div class="row align-items-center g-3">
-    <div class="col-auto">
-      <h1 class="fw-bold ff-sora mb-0" style="font-size: 48px;">{{ overall_pct }}%</h1>
+<div class="container">
+  {% if not career %}
+    <!-- كرت يعرض في حال لم يقم المستخدم باختيار وظيفة بعد -->
+    <div class="card text-center" style="margin-top: 40px; padding: 48px;">
+      <div style="font-size:48px; margin-bottom:16px;">🗺️</div>
+      <h3>No roadmap generated yet</h3>
+      <p style="color: var(--text-muted);">Please select a target career and complete the skill analysis first.</p>
     </div>
-    <div class="col">
-      <div class="fw-semibold mb-2" style="font-size: 15px;">Overall Roadmap Progress</div>
-      <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.25); border-radius: 999px;">
-        <div class="progress-bar bg-white" role="progressbar" style="width: {{ overall_pct }}%; border-radius: 999px;"></div>
-      </div>
-      <div class="small mt-2" style="opacity: .8;">{{ all_done }} of {{ all_tasks }} tasks complete</div>
+  {% else %}
+    <div class="page-header">
+      <h1 class="page-title">Your learning roadmap</h1>
+      <p class="page-subtitle">🎯 {{ career.title }} · Estimated duration: {{ career.estimated_time|default:"Flexible" }}</p>
     </div>
-  </div>
-</div>
 
-{% if phases %}
-  {% for phase in phases %}
-  <div class="phase-block">
-    <div class="phase-header">
-      <div class="phase-num {% if forloop.counter > 2 and phase.completed == 0 %}locked{% endif %}">
-        {% if phase.completed == phase.total and phase.total > 0 %}✓{% else %}{{ forloop.counter }}{% endif %}
+    <!-- Overall progress -->
+    <div class="card" style="margin-bottom:32px;">
+      <div class="flex-between">
+        <h3>Overall progress</h3>
+        <span style="font-size:24px; font-weight:700;" class="gradient-text">{{ overall }}%</span>
       </div>
-      <div style="flex:1;">
-        <div class="ff-sora fw-bold text-dark" style="font-size: 16px;">{{ phase.title }}</div>
-        <div style="font-size:13px; color:#64748B;">{{ phase.description|default:"" }}</div>
+      <div class="progress-bar" style="background: var(--border-color); border-radius: 8px; height: 10px; margin: 12px 0; overflow: hidden;">
+        <div class="progress-fill" style="width: {{ overall }}%; background: linear-gradient(135deg, #4F46E5, #7C3AED); height: 100%;"></div>
       </div>
+      <p style="font-size:13px; color:var(--text-muted);">
+        {{ completed_tasks }} of {{ total_tasks }} tasks completed.
+      </p>
+    </div>
+
+    <!-- Phases -->
+    {% for pd in phases_data %}
+      <div class="phase" style="margin-bottom: 24px; background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+        <div class="phase-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="display:flex; align-items:center; gap: 14px;">
+            <div class="phase-number {% if pd.completed == pd.total and pd.total > 0 %}done{% endif %}" 
+                 style="width: 32px; height: 32px; border-radius: 50%; background: #E2E8F0; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+              {% if pd.completed == pd.total and pd.total > 0 %}✓{% else %}{{ pd.phase.phase_number }}{% endif %}
+            </div>
+            <div class="phase-title-wrap">
+              <div class="phase-title" style="font-weight: 700; font-size: 16px;">{{ pd.phase.title }}</div>
+              <div class="phase-desc" style="font-size: 13px; color: var(--text-muted);">{{ pd.phase.description }}</div>
+            </div>
+          </div>
+          <span class="badge {% if pd.completed == pd.total and pd.total > 0 %}badge-success{% else %}badge-muted{% endif %}">
+            {{ pd.completed }}/{{ pd.total }} done
+          </span>
+        </div>
+
+        <div class="tasks" style="display: flex; flex-direction: column; gap: 10px; padding-left: 46px;">
+          {% for td in pd.tasks %}
+            <div class="task" style="display: flex; align-items: center; gap: 14px; background: var(--bg-site); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div class="task-check {{ td.status }}"
+                   data-task-ref="{{ td.task.task_ref }}"
+                   data-status="{{ td.status }}"
+                   onclick="cycleStatus(this)"
+                   style="cursor: pointer; width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                {% if td.status == 'completed' %}✓{% elif td.status == 'in_progress' %}●{% endif %}
+              </div>
+              <div class="task-content" style="flex: 1;">
+                <div class="task-title" style="font-weight: 500; {% if td.status == 'completed' %}text-decoration: line-through; color: var(--text-muted);{% endif %}">{{ td.task.title }}</div>
+                {% if td.task.description %}
+                  <div class="task-desc" style="font-size: 12px; color: var(--text-muted);">{{ td.task.description }}</div>
+                {% endif %}
+              </div>
+              <span class="badge task-badge {% if td.status == 'completed' %}badge-success{% elif td.status == 'in_progress' %}badge-warning{% else %}badge-muted{% endif %}">
+                {% if td.status == 'completed' %}Completed{% elif td.status == 'in_progress' %}In progress{% else %}Not started{% endif %}
+              </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="card">
+        <p>No roadmap defined for this career yet.</p>
+      </div>
+    {% endfor %}
+
+    <!-- AI next step -->
+    <div class="ai-box mt-2" style="background: rgba(79, 70, 229, 0.05); border: 1px dashed #4F46E5; padding: 16px; border-radius: 12px; display: flex; gap: 14px; align-items: flex-start;">
+      <div class="ai-icon" style="font-size: 24px;">💡</div>
       <div>
-        {% if phase.pct == 100 %}
-          <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">✓ Complete</span>
-        {% elif phase.completed > 0 %}
-          <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2">⟳ In progress</span>
-        {% else %}
-          <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3 py-2">Not started</span>
-        {% endif %}
+        <h3 style="margin: 0 0 4px 0; font-size: 16px;">Next recommended step</h3>
+        <p style="margin: 0; color: var(--text-muted); font-size: 14px;">{{ next_step }}</p>
       </div>
     </div>
-
-    <div class="d-flex align-items-center gap-3 mb-3" style="padding-left: 52px;">
-      <div class="progress style-progress flex-grow-1" style="height: 6px; background-color: #F1F5F9; border-radius: 999px;">
-        <div class="progress-bar bg-gradient-custom" role="progressbar" style="width: {{ phase.pct }}%; border-radius: 999px;"></div>
-      </div>
-      <span class="small text-muted" style="width: 36px;">{{ phase.pct }}%</span>
-    </div>
-
-    <div style="padding-left: 52px;">
-      {% for task in phase.tasks %}
-      <div class="task-card status-{{ task.status }}"
-           data-ref="{{ task.ref }}"
-           id="task-{{ task.ref|slugify }}"
-           onclick="toggleStatusMenu(this)">
-
-        <div class="task-check">
-           {% if task.status == 'completed' %}✓
-           {% elif task.status == 'in_progress' %}⟳
-           {% endif %}
-        </div>
-
-        <div style="flex:1;">
-          <div class="task-title">{{ task.title }}</div>
-          {% if task.description %}
-          <div class="small text-muted mt-1">{{ task.description }}</div>
-          {% endif %}
-        </div>
-
-        {% if task.estimated_time %}
-        <div class="task-meta small text-muted me-2">⏱ {{ task.estimated_time }}</div>
-        {% endif %}
-
-        <div class="status-menu" id="menu-{{ task.ref|slugify }}">
-          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','not_started')">⬜ Not started</div>
-          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','in_progress')">⟳ In progress</div>
-          <div class="status-option" onclick="setStatus(event,'{{ task.ref }}','completed')">✓ Completed</div>
-        </div>
-      </div>
-      {% empty %}
-      <div class="text-muted small py-2">No tasks in this phase.</div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endfor %}
-{% endif %}
-
-{% endif %}
+  {% endif %}
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block scripts %}
 <script>
-  const CSRF_TOKEN = '{{ csrf_token }}';
-  const UPDATE_TASK_URL = "{% url 'dashboard:update_task' %}";
+  const ORDER = ['not_started', 'in_progress', 'completed'];
+
+  function getCookie(name) {
+    let value = null;
+    document.cookie.split(';').forEach(c => {
+      const t = c.trim();
+      if (t.startsWith(name + '=')) value = decodeURIComponent(t.slice(name.length + 1));
+    });
+    return value;
+  }
+
+  async function cycleStatus(el) {
+    const current = el.dataset.status;
+    const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
+    const taskRef = el.dataset.taskRef;
+
+    try {
+      // 🎯 التعديل هنا: توجيه الـ URL إلى الدالة الفعلية لمشروعك
+      const resp = await fetch("{% url 'roadmap:update_progress' %}", { {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: `task_ref=${encodeURIComponent(taskRef)}&status=${next}`,
+      });
+      const data = await resp.json();
+      if (data.ok || data.success) { // فحص الاستجابة حسب ما يرجعه السيرفر عندك
+        el.dataset.status = next;
+        el.className = 'task-check ' + next;
+        el.textContent = next === 'completed' ? '✓' : (next === 'in_progress' ? '●' : '');
+
+        const badge = el.parentElement.querySelector('.task-badge');
+        const labels = { not_started: 'Not started', in_progress: 'In progress', completed: 'Completed' };
+        const cls = { not_started: 'badge-muted', in_progress: 'badge-warning', completed: 'badge-success' };
+        badge.textContent = labels[next];
+        badge.className = 'badge task-badge ' + cls[next];
+
+        setTimeout(() => location.reload(), 400);
+      }
+    } catch (err) {
+      console.error('Failed to update progress', err);
+    }
+  }
 </script>
-<script src="{% static 'js/roadmap.js' %}"></script>
 {% endblock %}

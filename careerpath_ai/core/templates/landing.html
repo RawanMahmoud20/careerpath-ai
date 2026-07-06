@@ -11,10 +11,11 @@
   </p>
   <div class="hero-buttons">
     {% if user.is_authenticated %}
-      <a href="{% url 'dashboard:home' %}" class="btn-primary">Go to dashboard</a>
+      {# ===== تعديل حاسم: وضع المسار الصريح مباشرة في href بدون وسم url ===== #}
+      <a href="/dashboard/" class="btn-primary">Go to dashboard</a>
     {% else %}
-      <a href="{% url 'register' %}" class="btn-primary">Start free</a>
-      <a href="{% url 'login' %}" class="btn-secondary">I have an account</a>
+      <a href="/accounts/signup/" class="btn-primary">Start free</a>
+      <a href="/accounts/login/" class="btn-secondary">I have an account</a>
     {% endif %}
   </div>
 </section>
@@ -33,9 +34,9 @@
       </div>
       <div class="career-meta">⏱️ 12-16 weeks</div>
       {% if user.is_authenticated %}
-        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/dashboard/" class="btn-primary btn-full">Choose this path</a>
       {% else %}
-        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/accounts/signup/" class="btn-primary btn-full">Choose this path</a>
       {% endif %}
     </div>
 
@@ -49,9 +50,9 @@
       </div>
       <div class="career-meta">⏱️ 14-20 weeks</div>
       {% if user.is_authenticated %}
-        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/dashboard/" class="btn-primary btn-full">Choose this path</a>
       {% else %}
-        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/accounts/signup/" class="btn-primary btn-full">Choose this path</a>
       {% endif %}
     </div>
 
@@ -65,9 +66,9 @@
       </div>
       <div class="career-meta">⏱️ 10-14 weeks</div>
       {% if user.is_authenticated %}
-        <a href="{% url 'dashboard:home' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/dashboard/" class="btn-primary btn-full">Choose this path</a>
       {% else %}
-        <a href="{% url 'register' %}" class="btn-primary btn-full">Choose this path</a>
+        <a href="/accounts/signup/" class="btn-primary btn-full">Choose this path</a>
       {% endif %}
     </div>
 

@@ -1,64 +1,48 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm
 
 User = get_user_model()
 
-# Shared CSS class so fields match the site's existing styling
-_INPUT = "form-control"
-
-
-class RegisterForm(forms.ModelForm):
-    """Sign-up form for the custom User model."""
-
+class NewRegisterForm(forms.ModelForm):
+    full_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Sarah Anderson'})
+    )
+    username = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'sarah_a'})
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'you@example.com'})
+    )
     password = forms.CharField(
-        min_length=8,
-        label="Password",
-        widget=forms.PasswordInput(attrs={"class": _INPUT, "placeholder": "••••••••"}),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'})
     )
     password2 = forms.CharField(
-        label="Confirm password",
-        widget=forms.PasswordInput(attrs={"class": _INPUT, "placeholder": "••••••••"}),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': '••••••••'})
     )
 
     class Meta:
         model = User
-        fields = ["full_name", "email"]
-        widgets = {
-            "full_name": forms.TextInput(attrs={"class": _INPUT, "placeholder": "Sarah Anderson"}),
-            "email": forms.EmailInput(attrs={"class": _INPUT, "placeholder": "you@example.com"}),
-        }
+        fields = ['username', 'email', 'password']
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
 
     def clean_email(self):
-        email = self.cleaned_data["email"].lower()
+        email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
+            raise forms.ValidationError("A user with this email already exists.")
         return email
 
     def clean(self):
-        cleaned = super().clean()
-        p1, p2 = cleaned.get("password"), cleaned.get("password2")
+        cleaned_data = super().clean()
+        p1 = cleaned_data.get('password')
+        p2 = cleaned_data.get('password2')
         if p1 and p2 and p1 != p2:
-            self.add_error("password2", "Passwords do not match.")
-        return cleaned
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data["email"].lower()
-        user.set_password(self.cleaned_data["password"])
-        if commit:
-            user.save()
-        return user
-
-
-class EmailLoginForm(AuthenticationForm):
-    """Login form: relabels the 'username' field as Email."""
-
-    username = forms.EmailField(
-        label="Email",
-        widget=forms.EmailInput(attrs={"class": _INPUT, "placeholder": "you@example.com", "autofocus": True}),
-    )
-    password = forms.CharField(
-        label="Password",
-        widget=forms.PasswordInput(attrs={"class": _INPUT, "placeholder": "••••••••"}),
-    )
+            raise forms.ValidationError("Passwords do not match.")
+        return cleaned_data
