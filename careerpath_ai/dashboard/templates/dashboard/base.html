@@ -23,6 +23,9 @@
         <a href="/dashboard/" class="{% if request.path == '/dashboard/' or request.path == '/dashboard' %}active{% endif %}">
           <i class="fa-solid fa-chart-simple" style="margin-right: 6px;"></i> Dashboard
         </a>
+        <a href="/careers/" class="{% if 'careers' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-compass" style="margin-right: 6px;"></i> Careers
+        </a>
         <a href="{% url 'skills:manage_skills' %}" class="{% if 'skills' in request.path %}active{% endif %}">
           <i class="fa-solid fa-list-check" style="margin-right: 6px;"></i> My Skills
         </a>
