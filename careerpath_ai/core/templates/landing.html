@@ -26,18 +26,25 @@
     {% if careers %}
     {% for career in careers %}
     <div class="career-card">
-      <div class="career-icon">💼</div>
+      <div class="career-icon">{{ career.icon }}</div>
       <div class="career-title">{{ career.title }}</div>
-      <div class="career-desc">
-        {{ career.description|truncatechars:140 }}
-      </div>
+      <div class="career-desc">{{ career.description|truncatewords:16 }}</div>
       <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
-      {% if user.is_authenticated %}
-      <a href="/dashboard/" class="btn-primary btn-full">Choose this path</a>
-      {% else %}
-      <a href="/accounts/signup/" class="btn-primary btn-full">Choose this path</a>
-      {% endif %}
+      <div class="skill-tags">
+        {% for skill in career.required_skills.all|slice:":3" %}
+        <span class="skill-tag">{{ skill.name }}</span>
+        {% endfor %}
+      </div>
+      <form method="post" action="/dashboard/select-career/{{ career.id }}/">
+        {% csrf_token %}
+        <button type="submit" class="btn-primary btn-full">
+          {% if career == target_career %}✓ Current target{% else %}Choose this path{% endif %}
+        </button>
+      </form>
+      <a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>
     </div>
+    {% empty %}
+    <p>No careers yet. Run <code>python manage.py seed_data</code>.</p>
     {% endfor %}
     {% else %}
     <div class="empty-state text-center">

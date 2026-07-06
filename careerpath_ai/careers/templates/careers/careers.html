@@ -34,6 +34,8 @@
       </div>
       {% endif %}
 
+      <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View details</a>
+
       <form method="post" action="{% url 'careers:choose' career.id %}" style="margin-top: auto;">
         {% csrf_token %}
         {% if career.id == selected_id %}

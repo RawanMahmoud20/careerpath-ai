@@ -6,6 +6,12 @@ from django.views.decorators.http import require_POST
 from .models import Career, SelectedCareer
 
 
+def career_detail(request, career_id):
+    """Show detailed information about a specific career path."""
+    career = get_object_or_404(Career.objects.prefetch_related('required_skills'), id=career_id)
+    return render(request, 'careers/career_detail.html', {'career': career})
+
+
 @login_required
 def career_list(request):
     careers = Career.objects.all().prefetch_related('required_skills')

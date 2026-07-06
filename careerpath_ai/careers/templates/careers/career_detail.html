@@ -1,0 +1,42 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}{{ career.title }} — CareerPath AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="page-eyebrow">Career details</div>
+    <h1 class="page-title">{{ career.title }}</h1>
+    <p class="page-subtitle">{{ career.description }}</p>
+  </div>
+
+  <div class="card" style="padding: 24px; margin-bottom: 24px;">
+    <div class="flex-between" style="margin-bottom: 16px;">
+      <div>
+        <h2 style="margin: 0;">What this role involves</h2>
+        <p class="text-muted" style="margin: 6px 0 0;">Estimated time: {{ career.estimated_time }}</p>
+      </div>
+      <a href="{% url 'careers:list' %}" class="btn-secondary">Back to careers</a>
+    </div>
+
+    {% if career.required_skills.all %}
+      <h3 style="margin-bottom: 12px;">Key skills</h3>
+      <div class="skill-tags">
+        {% for skill in career.required_skills.all %}
+          <span class="skill-tag">{{ skill.name }}</span>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">No skills have been attached to this career yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    <h2 style="margin-top: 0;">Ready to choose this path?</h2>
+    <p class="text-muted">Set this as your current target career to tailor your roadmap.</p>
+    <form method="post" action="{% url 'careers:choose' career.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary">Choose this path</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
