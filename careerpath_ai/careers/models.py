@@ -1,34 +1,32 @@
 from django.db import models
 from django.conf import settings
 
-class Skill(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    category = models.CharField(max_length=100, blank=True, null=True) # مثل: Technical, Soft Skill
+from django.db import models
+from django.conf import settings
+# استيراد الـ Skill من تطبيقها الجديد
+from skills.models import Skill 
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-# 2. Careers)
 class Career(models.Model):
-    title = models.CharField(max_length=150, unique=True) # مثل: Data Analyst
+    title = models.CharField(max_length=150, unique=True)
     description = models.TextField()
     required_skills = models.ManyToManyField(Skill, through='CareerSkill', related_name='careers')
+    estimated_time = models.CharField(max_length=50, default="6 Months")
 
     def __str__(self):
         return self.title
 
 class CareerSkill(models.Model):
+    PRIORITY_CHOICES = [('high', 'High'), ('medium', 'Medium'), ('low', 'Low')]
     career = models.ForeignKey(Career, on_delete=models.CASCADE)
     skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    is_transferable = models.BooleanField(default=False) # هل تعتبر مهارة قابلة للانتقال؟
+    is_transferable = models.BooleanField(default=False)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='high')
 
     class Meta:
         unique_together = ('career', 'skill')
 
-
+    def __str__(self):
+        return f"{self.career.title} | {self.skill.name} ({self.priority})"
 class SelectedCareer(models.Model):
     user   = models.OneToOneField(
         settings.AUTH_USER_MODEL,

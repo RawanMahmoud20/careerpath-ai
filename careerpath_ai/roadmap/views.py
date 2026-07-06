@@ -5,7 +5,6 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from dashboard.models import UserTaskProgress, UserProfile
 
-
 @login_required
 def roadmap(request):
     user = request.user
@@ -40,15 +39,29 @@ def roadmap(request):
             tasks = phase.get('tasks', [])
             total = len(tasks)
 
+            # تجهيز مصفوفة المهام بالهيكلية المتوافقة مع الـ Template الجديد
+            formatted_tasks = []
             for t in tasks:
-                t['status'] = progress_map.get(t['ref'], 'not_started')
+                status = progress_map.get(t['ref'], 'not_started')
+                formatted_tasks.append({
+                    'task': {
+                        'task_ref': t['ref'],
+                        'title': t['title'],
+                        'description': t.get('description', '')
+                    },
+                    'status': status
+                })
 
-            completed = sum(1 for t in tasks if t['status'] == 'completed')
+            completed = sum(1 for t in tasks if progress_map.get(t['ref'], 'not_started') == 'completed')
             pct = int((completed / total) * 100) if total > 0 else 0
 
             phases_with_stats.append({
-                **phase,
-                'tasks': tasks,
+                'phase': {
+                    'phase_number': len(phases_with_stats) + 1,
+                    'title': phase.get('title', ''),
+                    'description': phase.get('description', '')
+                },
+                'tasks': formatted_tasks,
                 'completed': completed,
                 'total': total,
                 'pct': pct,
@@ -58,75 +71,40 @@ def roadmap(request):
     all_done = sum(p['completed'] for p in phases_with_stats)
     overall_pct = int((all_done / all_tasks) * 100) if all_tasks > 0 else 0
 
+    # جلب التوصية القادمة من الـ Plan أو وضع نص افتراضي ذكي
+    next_step = "Focus on completing your current active tasks to bridge your skill gaps!"
+    if plan and plan.target_career:
+        next_step = f"Continue following your customized plan to unlock your potential as a {plan.target_career.title}."
+
+    # تجهيز الـ Context ليتوافق بالملي مع التصميم الجديد
     context = {
-        'plan': plan,
-        'phases': phases_with_stats,
-        'overall_pct': overall_pct,
-        'all_done': all_done,
-        'all_tasks': all_tasks,
+        'career': plan.target_career if plan else None,
+        'overall': overall_pct,
+        'completed_tasks': all_done,
+        'total_tasks': all_tasks,
+        'phases_data': phases_with_stats,
+        'next_step': next_step
     }
     return render(request, 'roadmap/roadmap.html', context)
 
 
-@login_required
-def skills_selection(request):
-    """Display the skill selection page for the user"""
-    return render(request, 'roadmap/skills_selection.html')
+
 
 
 @login_required
 @require_POST
-def save_skills(request):
-    try:
-        data = json.loads(request.body)
-        selected_skills = data.get('skills', [])
-
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        profile.skills = selected_skills
-        profile.save()
-
-        return JsonResponse({
-            'success': True,
-            'redirect_url': '/roadmap/'
-        })
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
-@login_required
-def skills_selection(request):
-    """Display the skill selection page for the user"""
-    try:
-        profile = UserProfile.objects.get(user=request.user)
-        user_skills = profile.skills if profile.skills else []
-    except UserProfile.DoesNotExist:
-        user_skills = []
-
-    # تعريف المهارات وتصنيفاتها كبيانات مهيكلة
-    skills_data = [
-        {
-            'category_title': '💻 Frontend Development',
-            'icon_style': '🔹',
-            'skills': [
-                {'id': 'html', 'name': 'HTML5 & CSS3'},
-                {'id': 'javascript', 'name': 'JavaScript (ES6+)'},
-                {'id': 'bootstrap', 'name': 'Bootstrap 5'},
-                {'id': 'react', 'name': 'React.js'},
-            ]
-        },
-        {
-            'category_title': '⚙️ Backend & Database',
-            'icon_style': '🔸',
-            'skills': [
-                {'id': 'python', 'name': 'Python'},
-                {'id': 'django', 'name': 'Django Framework'},
-                {'id': 'sql', 'name': 'SQL Databases'},
-                {'id': 'git', 'name': 'Git & GitHub'},
-            ]
-        }
-    ]
-
-    context = {
-        'user_skills': user_skills,
-        'skills_categories': skills_data # أضفنا تصنيفات المهارات هنا
-    }
+def update_task_progress(request):
+    task_ref = request.POST.get('task_ref')
+    status = request.POST.get('status')
     
-    return render(request, 'roadmap/skills_selection.html', context)
+    if not task_ref or not status:
+        return JsonResponse({'ok': False, 'error': 'Missing data'}, status=400)
+        
+    # تحديث أو إنشاء حالة المهمة للمستخدم الحالي في الداتا بيز
+    progress, created = UserTaskProgress.objects.update_or_create(
+        user=request.user,
+        task_ref=task_ref,
+        defaults={'status': status}
+    )
+    
+    return JsonResponse({'ok': True})

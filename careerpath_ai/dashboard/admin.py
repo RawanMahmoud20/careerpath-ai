@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import UserProfile
 
-# Register your models here.
+# تسجيل موديل الملف الشخصي ليظهر في لوحة التحكم
+admin.site.register(UserProfile)

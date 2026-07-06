@@ -5,119 +5,81 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CareerPath AI{% endblock %}</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #0F1419; min-height: 100vh; }
-    .ff-sora { font-family: 'Sora', sans-serif; }
-
-    .bg-gradient-custom { background: linear-gradient(135deg, #4F46E5, #7C3AED) !important; }
-    .text-gradient-custom {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .cp-card-hover { transition: box-shadow .2s; }
-    .cp-card-hover:hover { box-shadow: 0 4px 20px rgba(79,70,229,0.1) !important; }
-    .btn-custom-primary { transition: all .2s; }
-    .btn-custom-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,70,229,0.35) !important; }
-
-    /* Top-nav menu links */
-    .cp-nav-link {
-      font-size: 14.5px; color: #64748B; text-decoration: none;
-      padding: 6px 12px; border-radius: 8px; transition: all 0.2s ease;
-    }
-    .cp-nav-link:hover { color: #4F46E5; background-color: #EEF2F6; }
-    .cp-nav-link.active { color: #4F46E5; font-weight: 600; }
-    @media (max-width: 991.98px) {
-    .navbar-collapse {
-        background-color: #ffffff; 
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        margin-top: 10px;
-    }
-    
-    .cp-nav-link {
-        display: block;
-        width: 100%;
-        margin-bottom: 5px;
-        padding: 10px 15px;
-    }
-}
-  </style>
-
-  {% block extra_css %}{% endblock %}
+  <!-- مكتبة الأيقونات الرسمية لتشغيل الـ Hamburger بشكل عصري ونظيف -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 
-  <nav class="navbar navbar-expand-lg sticky-top bg-white border-bottom shadow-sm" style="height: 62px; border-color: #E5E7EB !important;">
-    <div class="container-fluid px-4">
-      <a class="navbar-brand ff-sora fw-bold fs-5 text-gradient-custom" href="/dashboard/">🚀 CareerPath AI</a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#cpNav" aria-controls="cpNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="cpNav">
-        <!-- Center menu links — تم تعديل المسارات هنا لتصبح نصية مباشرة لمنع خطأ الـ NoReverseMatch -->
-        <div class="mx-auto d-flex align-items-center gap-2 my-3 my-lg-0">
-          <a href="/dashboard/" class="cp-nav-link {% if '/dashboard/' in request.path and not 'profile' in request.path %}active{% endif %}">
-            <i class="bi bi-grid-1x2 me-1"></i> Dashboard
-          </a>
-          <a href="/roadmap/" class="cp-nav-link {% if '/roadmap/' in request.path %}active{% endif %}">
-            <i class="bi bi-map me-1"></i> My Roadmap
-          </a>
-          <a href="/analysis/" class="cp-nav-link {% if '/analysis/' in request.path %}active{% endif %}">
-            <i class="bi bi-graph-up-arrow me-1"></i> Analysis
-          </a>         
-          <a href="/careers/" class="cp-nav-link {% if '/careers/' in request.path %}active{% endif %}">
-            <i class="bi bi-briefcase me-1"></i> Careers
-          </a>
-          <a href="/dashboard/profile/" class="cp-nav-link {% if 'profile' in request.path %}active{% endif %}">
-            <i class="bi bi-person me-1"></i> Profile
-          </a>
-        </div>
-
-        <!-- Right side: user + logout -->
-        <div class="d-flex align-items-center gap-3">
-          <span class="fs-6 text-secondary d-none d-sm-inline">{{ user.full_name|default:user.email }}</span>
-          <div class="bg-gradient-custom text-white d-flex align-items-center justify-content-center rounded-circle fw-bold shadow-sm"
-               style="width: 34px; height: 34px; font-size: 13px;">
-            {{ user.full_name|default:user.email|first|upper }}
-          </div>
-          {# التوجيه لمسار تسجيل الخروج المباشر #}
-          <a href="/accounts/logout/" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 8px; font-size: 13px;">
-            Logout
-          </a>
-        </div>
+  {% if user.is_authenticated %}
+  <nav class="navbar">
+    <div class="flex-between" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative;">
+      
+      <!-- اليسار: اللوجو -->
+      <a href="/dashboard/" class="logo">🚀 CareerPath AI</a>
+      
+      <!-- المنتصف: الروابط + زر الخروج للموبايل -->
+      <div class="nav-links" id="navLinks">
+        <a href="/dashboard/" class="{% if request.path == '/dashboard/' or request.path == '/dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-chart-simple" style="margin-right: 6px;"></i> Dashboard
+        </a>
+        <a href="{% url 'skills:manage_skills' %}" class="{% if 'skills' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-list-check" style="margin-right: 6px;"></i> My Skills
+        </a>
+        <a href="/analysis/" class="{% if 'analysis' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-bullseye" style="margin-right: 6px;"></i> Skill Gap
+        </a>
+        <a href="/roadmap/" class="{% if 'roadmap' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-map" style="margin-right: 6px;"></i> Roadmap
+        </a>
+        
+        <!-- زر اللوج اوت المخصص للموبايل فقط (يختفي في الكمبيوتر ويظهر داخل المنيو) -->
+        <a href="/accounts/logout/" class="d-show-mobile" style="color: #EF4444; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px;">
+          <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 6px;"></i> Logout
+        </a>
       </div>
+
+      <!-- اليمين: البروفايل وزر الخروج للكمبيوتر وزر الموبايل -->
+      <div class="nav-user" style="display: flex; align-items: center; gap: 16px;">
+        <a href="/dashboard/profile/" class="avatar" title="View Profile">
+          {{ user.username|slice:":1"|upper }}
+        </a>
+        
+        <!-- زر اللوج اوت الخاص بالكمبيوتر (يختفي في الموبايل) -->
+        <a href="/accounts/logout/" class="btn-ghost d-none-mobile" style="font-size: 13px; font-weight: 600;">
+          <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 4px;"></i> Logout
+        </a>
+        
+        <!-- زر الهامبرغر للموبايل -->
+        <button class="menu-toggle" onclick="toggleMenu()" aria-label="Toggle Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
     </div>
   </nav>
+  {% endif %}
 
-  <div class="p-4 p-md-5">
-    {% if messages %}
-      {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
-        <i class="bi bi-info-circle me-2"></i> {{ msg }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-      {% endfor %}
-    {% endif %}
-
-    {% block content %}{% endblock %}
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="message message-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
   </div>
+  {% endif %}
 
-  <div class="position-fixed bottom-0 end-0 m-4 p-3 bg-dark text-white rounded-3 shadow-lg d-none" id="cpToast" style="z-index: 9999; font-size: 14px; min-width: 200px; transition: opacity 0.3s ease;"></div>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{% static 'js/dashboard.js' %}"></script>
+  {% block scripts %}{% endblock %}
 
-  {% block extra_js %}{% endblock %}
+  <!-- سكربت تدوير كلاس الفتح والإغلاق للمنيو -->
+  <script>
+    function toggleMenu() {
+      const nav = document.getElementById('navLinks');
+      nav.classList.toggle('open');
+    }
+  </script>
 </body>
 </html>

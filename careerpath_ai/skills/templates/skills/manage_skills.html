@@ -1,0 +1,121 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}My Skills - CareerPath AI{% endblock %}
+
+{% block content %}
+<div class="container-narrow">
+  <div class="page-header">
+    <h1 class="page-title">My Skills</h1>
+    <p class="page-subtitle">Keep your technical and soft skills up to date for accurate gap analysis</p>
+  </div>
+
+  <!-- Add skill Card With Category Filtering -->
+  <div class="card" style="margin-bottom:32px;">
+    <h3 style="margin-bottom:20px;">Add a skill</h3>
+    <form method="post" action="{% url 'skills:add_skill' %}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+      {% csrf_token %}
+      
+      <!-- القائمة المنسدلة الأولى: الـ Category -->
+      <div class="form-group" style="flex:1; min-width:180px; margin-bottom:0;">
+        <label for="category_select">Category</label>
+        <select id="category_select" class="form-control" onchange="filterSkillsByCategory()">
+          <option value="" selected>All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- القائمة المنسدلة الثانية: الـ Skills (التي سيتم فلترتها) -->
+      <div class="form-group" style="flex:2; min-width:180px; margin-bottom:0;">
+        <label for="skill_id">Skill</label>
+        <select id="skill_id" name="skill_id" class="form-control" required>
+          <option value="" disabled selected>Select a skill...</option>
+          {% for skill in all_skills %}
+            <!-- خزنّا الـ category كـ attribute مخصص داخل الـ option لسهولة الفلترة -->
+            <option value="{{ skill.id }}" data-category="{{ skill.category }}">{{ skill.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="flex:1; min-width:120px; margin-bottom:0;">
+        <label for="current_level">Level</label>
+        <select id="current_level" name="current_level" class="form-control">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Add Skill</button>
+    </form>
+  </div>
+
+  <!-- Current skills List -->
+  <!-- الـ Loop الذكي المقسم حسب الـ Category -->
+  <h3 class="section-title">Your skills ({{ user_skills.count }})</h3>
+  
+  {% if user_skills %}
+    <!-- نقوم بإعادة تجميع المهارات بناءً على الـ category الخاصة بالـ skill -->
+    {% regroup user_skills by skill.category as category_list %}
+
+    {% for category in category_list %}
+      <!-- اسم القسم (Category Name) -->
+      <div class="category-block" style="margin-bottom: 24px;">
+        <h4 style="color: var(--text-main); margin-bottom: 12px; font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+          {% if category.grouper %}{{ category.grouper }}{% else %}Uncategorized{% endif %}
+        </h4>
+
+        <!-- المهارات التابعة لهذا القسم فقط -->
+        <div class="skills-grid" style="display: flex; flex-direction: column; gap: 10px;">
+          {% for us in category.list %}
+            <div class="skill-item" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:12px; border-radius:8px;">
+              <div>
+                <div class="skill-name" style="font-weight:600;">{{ us.skill.name }}</div>
+                <span class="badge badge-info" style="margin-top:4px; display:inline-block; font-size: 12px;">
+                  {{ us.get_level_display }}
+                </span>
+              </div>
+              <form method="post" action="{% url 'skills:remove_skill' us.skill.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-ghost" style="color:#991B1B; background:none; border:none; cursor:pointer;">Remove</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <p style="color:var(--text-muted);">You haven't added any skills yet. Add some above to get started.</p>
+  {% endif %}
+</div>
+
+<!-- 📜 جافا سكربت سحرية للفلترة الفورية بدون تحميل الصفحة -->
+<script>
+function filterSkillsByCategory() {
+  const selectedCategory = document.getElementById('category_select').value;
+  const skillSelect = document.getElementById('skill_id');
+  const options = skillSelect.options;
+
+  // إعادة ضبط الاختيار الافتراضي
+  skillSelect.value = "";
+
+  for (let i = 0; i < options.length; i++) {
+    const option = options[i];
+    const optionCategory = option.getAttribute('data-category');
+
+    // لو الخيار هو الافتراضي الشفاف اتركه ظاهر دايماً
+    if (option.value === "") {
+      option.style.display = "block";
+      continue;
+    }
+
+    // الفلترة: لو الـ Category مطابق أو تم اختيار "All Categories" بنظهره، غير هيك بنخفيه
+    if (selectedCategory === "" || optionCategory === selectedCategory) {
+      option.style.display = "block";
+    } else {
+      option.style.display = "none";
+    }
+  }
+}
+</script>
+{% endblock %}

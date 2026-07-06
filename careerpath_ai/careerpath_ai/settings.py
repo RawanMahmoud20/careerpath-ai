@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'dashboard',
     'roadmap',
     'core',
+    "skills"
 ]
 
 MIDDLEWARE = [
