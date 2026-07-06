@@ -18,7 +18,7 @@
       <div class="flex-between" style="margin-bottom: 12px;">
         <div class="career-icon">💼</div>
         {% if career.id == selected_id %}
-          <span class="badge badge-success">✓ Current target</span>
+        <span class="badge badge-success">✓ Current target</span>
         {% endif %}
       </div>
 
@@ -29,19 +29,20 @@
       {% if career.required_skills.all %}
       <div style="margin: 12px 0;">
         {% for skill in career.required_skills.all|slice:":4" %}
-          <span class="badge badge-muted">{{ skill.name }}</span>
+        <span class="badge badge-muted">{{ skill.name }}</span>
         {% endfor %}
       </div>
       {% endif %}
 
-      <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View details</a>
+      <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View
+        details</a>
 
       <form method="post" action="{% url 'careers:choose' career.id %}" style="margin-top: auto;">
         {% csrf_token %}
         {% if career.id == selected_id %}
-          <button type="submit" class="btn-secondary btn-full" disabled>✓ Selected</button>
+        <button type="submit" class="btn-secondary btn-full" disabled>✓ Selected</button>
         {% else %}
-          <button type="submit" class="btn-primary btn-full">Choose this path</button>
+        <button type="submit" class="btn-primary btn-full">Choose this path</button>
         {% endif %}
       </form>
 
