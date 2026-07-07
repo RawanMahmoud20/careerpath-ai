@@ -3,40 +3,58 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header">
-        <div class="page-eyebrow">Career details</div>
-        <h1 class="page-title">{{ career.title }}</h1>
-        <p class="page-subtitle">{{ career.description }}</p>
+
+  <!-- Header -->
+  <div class="page-header">
+    <i class="bi {{ career.icon }}" style="font-size: 44px; color: var(--primary); margin-bottom: 16px; display: inline-block;"></i>
+    <div class="page-eyebrow">Career details</div>
+    <h1 class="page-title">{{ career.title }}</h1>
+    <p class="page-subtitle">{{ career.description }}</p>
+    <div class="career-meta" style="margin-top: 12px;">
+      ⏱️ {{ career.estimated_time }} &nbsp;•&nbsp; 🎯 {{ career.required_skills.count }} skills required
+    </div>
+  </div>
+
+  <!-- Skills card -->
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="flex-between" style="margin-bottom: 20px;">
+      <h3 class="section-title" style="margin: 0;">Key skills</h3>
+      <a href="{% url 'careers:list' %}" class="btn-secondary">Back to careers</a>
     </div>
 
-    <div class="card" style="padding: 24px; margin-bottom: 24px;">
-        <div class="flex-between" style="margin-bottom: 16px;">
-            <div>
-                <h2 style="margin: 0;">What this role involves</h2>
-                <p class="text-muted" style="margin: 6px 0 0;">Estimated time: {{ career.estimated_time }}</p>
-            </div>
-            <a href="{% url 'careers:list' %}" class="btn-secondary">Back to careers</a>
+    {% regroup career.careerskill_set.all by priority as skill_groups %}
+    {% for group in skill_groups %}
+      <div style="margin-bottom: 20px;">
+        <div class="career-meta" style="font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+          {{ group.grouper|title }} priority
         </div>
-
-        {% if career.required_skills.all %}
-        <h3 style="margin-bottom: 12px;">Key skills</h3>
-        <div class="skill-tags">
-            {% for skill in career.required_skills.all %}
-            <span class="skill-tag">{{ skill.name }}</span>
-            {% endfor %}
+        <div class="skill-tags" style="margin-bottom: 0;">
+          {% for cs in group.list %}
+            <span class="badge badge-{{ cs.priority }}">
+              {{ cs.skill.name }}
+              {% if cs.is_transferable %}🔄{% endif %}
+            </span>
+          {% endfor %}
         </div>
-        {% else %}
-        <p class="text-muted">No skills have been attached to this career yet.</p>
-        {% endif %}
-    </div>
+      </div>
+    {% empty %}
+      <p class="career-desc">No skills have been attached to this career yet.</p>
+    {% endfor %}
+  </div>
 
-    <div class="card" style="padding: 24px;">
-        <h2 style="margin-top: 0;">Ready to choose this path?</h2>
-        <p class="text-muted">Set this as your current target career to tailor your roadmap.</p>
-        <form method="post" action="{% url 'careers:choose' career.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn-primary">Choose this path</button>
-        </form>
+  <!-- CTA -->
+  <div class="welcome-banner">
+    <div class="flex-between">
+      <div>
+        <h1 style="font-size: 22px;">Ready to choose this path?</h1>
+        <p style="margin-bottom: 0;">Set this as your current target career to tailor your roadmap.</p>
+      </div>
+      <form method="post" action="{% url 'careers:choose' career.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-secondary">Choose this path</button>
+      </form>
     </div>
+  </div>
+
 </div>
 {% endblock %}

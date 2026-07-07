@@ -874,3 +874,55 @@ select.form-control {
   font-size: 12px;
   color: #991B1B;
 }
+
+/* ==========================================================================
+   Fix: equal-height career cards + pinned action buttons
+   ========================================================================== */
+.career-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.career-card .career-desc {
+  flex-grow: 1;
+}
+
+.career-card .career-icon {
+  color: var(--primary);
+  display: inline-block;
+}
+
+/* ==========================================================================
+   Career icon badge - colored background wrapper
+   ========================================================================== */
+.career-icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.career-icon-badge i {
+  font-size: 26px;
+}
+
+/* لون افتراضي (لو ما في تصنيف) */
+.icon-bg-default { background: #EEF2FF; }
+.icon-bg-default i { color: var(--primary); }
+
+/* ألوان مميزة حسب نوع المجال */
+.icon-bg-blue   { background: #DBEAFE; }
+.icon-bg-blue i { color: #2563EB; }
+
+.icon-bg-green  { background: #D1FAE5; }
+.icon-bg-green i { color: #059669; }
+
+.icon-bg-orange { background: #FFEDD5; }
+.icon-bg-orange i { color: #EA580C; }
+
+.icon-bg-pink   { background: #FCE7F3; }
+.icon-bg-pink i { color: #DB2777; }

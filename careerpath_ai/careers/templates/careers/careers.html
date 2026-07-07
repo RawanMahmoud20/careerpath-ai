@@ -16,7 +16,9 @@
     <div class="career-card">
 
       <div class="flex-between" style="margin-bottom: 12px;">
-        <div class="career-icon">💼</div>
+      <div class="career-icon-badge icon-bg-{{ career.icon_color }}">
+        <i class="bi {{ career.icon }}"></i>
+      </div>
         {% if career.id == selected_id %}
         <span class="badge badge-success">✓ Current target</span>
         {% endif %}
@@ -26,13 +28,11 @@
       <div class="career-desc">{{ career.description|truncatewords:25 }}</div>
       <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
 
-      {% if career.required_skills.all %}
-      <div style="margin: 12px 0;">
+      <div class="skill-tags">
         {% for skill in career.required_skills.all|slice:":4" %}
-        <span class="badge badge-muted">{{ skill.name }}</span>
+        <span class="skill-tag">{{ skill.name }}</span>
         {% endfor %}
       </div>
-      {% endif %}
 
       <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View
         details</a>
