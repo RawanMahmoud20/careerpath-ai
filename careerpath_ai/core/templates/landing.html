@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block title %}CareerPath AI - Plan Your Career Transition{% endblock %}
 
 {% block content %}
@@ -26,8 +27,9 @@
     {% if careers %}
     {% for career in careers %}
     <div class="career-card">
-      <div class="career-icon">{{ career.icon }}</div>
-      <div class="career-title">{{ career.title }}</div>
+<div class="career-icon-badge icon-bg-{{ career.icon_color }}">
+  <i class="bi {{ career.icon }}"></i>
+</div>      <div class="career-title">{{ career.title }}</div>
       <div class="career-desc">{{ career.description|truncatewords:16 }}</div>
       <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
       <div class="skill-tags">

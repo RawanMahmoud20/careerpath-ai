@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CareerPath AI{% endblock %}</title>
-  <!-- مكتبة الأيقونات الرسمية لتشغيل الـ Hamburger بشكل عصري ونظيف -->
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- Official icon library, used to render a modern, clean hamburger menu -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -16,11 +16,11 @@
   {% if user.is_authenticated %}
   <nav class="navbar">
     <div class="flex-between" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative;">
-      
-      <!-- اليسار: اللوجو -->
+
+      <!-- Left: logo -->
       <a href="/dashboard/" class="logo">🚀 CareerPath AI</a>
-      
-      <!-- المنتصف: الروابط + زر الخروج للموبايل -->
+
+      <!-- Center: nav links + mobile-only logout button -->
       <div class="nav-links" id="navLinks">
         <a href="/dashboard/" class="{% if request.path == '/dashboard/' or request.path == '/dashboard' %}active{% endif %}">
           <i class="fa-solid fa-chart-simple" style="margin-right: 6px;"></i> Dashboard
@@ -37,30 +37,36 @@
         <a href="/roadmap/" class="{% if 'roadmap' in request.path %}active{% endif %}">
           <i class="fa-solid fa-map" style="margin-right: 6px;"></i> Roadmap
         </a>
-        
-        <!-- زر اللوج اوت المخصص للموبايل فقط (يختفي في الكمبيوتر ويظهر داخل المنيو) -->
+
+        <!-- Mobile-only logout link (hidden on desktop, shown inside the mobile menu) -->
         <a href="/accounts/logout/" class="d-show-mobile" style="color: #EF4444; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px;">
           <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 6px;"></i> Logout
         </a>
       </div>
 
-      <!-- اليمين: البروفايل وزر الخروج للكمبيوتر وزر الموبايل -->
+    <!-- Right: profile menu, desktop logout button, and mobile hamburger -->
       <div class="nav-user" style="display: flex; align-items: center; gap: 16px;">
-        <a href="/dashboard/profile/" class="avatar" title="View Profile">
-          {{ user.username|slice:":1"|upper }}
-        </a>
-        
-        <!-- زر اللوج اوت الخاص بالكمبيوتر (يختفي في الموبايل) -->
-        <a href="/accounts/logout/" class="btn-ghost d-none-mobile" style="font-size: 13px; font-weight: 600;">
-          <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 4px;"></i> Logout
-        </a>
-        
-        <!-- زر الهامبرغر للموبايل -->
+
+        <!-- Avatar with dropdown menu (Profile + Log out) -->
+        <div class="user-menu">
+          <button class="avatar" onclick="toggleUserMenu()" style="border:none; cursor:pointer;">
+            {{ user.username|slice:":1"|upper }}
+          </button>
+          <div class="user-dropdown" id="userDropdown">
+            <a href="/dashboard/profile/">
+              <i class="fa-solid fa-user"></i> Profile
+            </a>
+            <a href="/accounts/logout/" class="dropdown-logout">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+            </a>
+          </div>
+        </div>
+
+        <!-- Mobile hamburger button -->
         <button class="menu-toggle" onclick="toggleMenu()" aria-label="Toggle Menu">
           <i class="fa-solid fa-bars"></i>
         </button>
       </div>
-
     </div>
   </nav>
   {% endif %}
@@ -79,12 +85,26 @@
 
   {% block scripts %}{% endblock %}
 
-  <!-- سكربت تدوير كلاس الفتح والإغلاق للمنيو -->
+  <!-- Toggle open/close class for the mobile menu -->
   <script>
     function toggleMenu() {
       const nav = document.getElementById('navLinks');
       nav.classList.toggle('open');
     }
+
+    // Toggle open/close class for the profile dropdown
+    function toggleUserMenu() {
+      document.getElementById('userDropdown').classList.toggle('open');
+    }
+
+    // Close the dropdown when clicking outside of it
+    document.addEventListener('click', function(e) {
+      const menu = document.querySelector('.user-menu');
+      const dropdown = document.getElementById('userDropdown');
+      if (menu && !menu.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
   </script>
 </body>
 </html>
