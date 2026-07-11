@@ -5,24 +5,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}CareerPath AI{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 
   {# ===== Top navigation bar — always first, stays pinned to the top ===== #}
-  <nav class="landing-nav">
-    <a href="{% url 'landing' %}" class="logo">🚀 CareerPath AI</a>
-    <div style="display:flex; gap:12px; align-items:center;">
-      {% if user.is_authenticated %}
-        <span style="color:var(--text-muted); font-size:14px;">{{ user.email }}</span>
-        <a href="{% url 'dashboard:home' %}" class="btn-secondary">Dashboard</a>
-        <a href="{% url 'logout' %}" class="btn-secondary">Log out</a>
-      {% else %}
-        <a href="{% url 'login' %}" class="btn-secondary">Log in</a>
-        <a href="{% url 'signup' %}" class="btn-primary">Get started</a>
-      {% endif %}
-    </div>
-  </nav>
+ <nav class="landing-nav">
+  <a href="/" class="logo">🚀 CareerPath AI</a>
+  <div style="display:flex; gap:12px; align-items:center;">
+    {% if user.is_authenticated %}
+
+      <div class="user-menu">
+        <button class="avatar-btn" onclick="toggleUserMenu()">
+          {{ user.username|slice:":1"|upper }}
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-email">{{ user.email }}</div>
+          <a href="/dashboard/profile/">
+            <i class="bi bi-person"></i> Profile
+          </a>
+          <a href="/dashboard/">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+          <a href="/accounts/logout/" class="dropdown-logout">
+            <i class="bi bi-box-arrow-right"></i> Log out
+          </a>
+        </div>
+      </div>
+
+    {% else %}
+      <a href="/accounts/login/" class="btn-secondary">Log in</a>
+      <a href="/accounts/signup/" class="btn-primary">Get started</a>
+    {% endif %}
+  </div>
+</nav>
 
   {# ===== Flash messages — appear BELOW the navbar, never above it ===== #}
   {% if messages %}
@@ -40,3 +57,16 @@
   {% block scripts %}{% endblock %}
 </body>
 </html>
+
+<script>
+  function toggleUserMenu() {
+    document.getElementById('userDropdown').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    const menu = document.querySelector('.user-menu');
+    const dropdown = document.getElementById('userDropdown');
+    if (menu && !menu.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
+</script>
