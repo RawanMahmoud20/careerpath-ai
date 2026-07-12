@@ -1,9 +1,12 @@
-from django.shortcuts import render
+import json
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 
-from careers.models import CareerSkill
+from careers.models import CareerSkill, Career # تأكد من استيراد موديل Career
 from skills.models import UserSkill
 from .models import UserRoadmap, SkillGap
+from .roadmap_generator import generate_and_save_roadmap # استدعاء ملف التوليد الذكي لجميناي
 
 LEVEL_WEIGHTS = {
     'advanced':     1.0,
@@ -50,7 +53,7 @@ def skill_gap_analysis(request):
                 else:
                     skills_to_improve.append(us_obj)
             else:
-                SkillGap.objects.get_or_create(roadmap=roadmap, skill_name=name)
+                SkillGap.objects.get_or_create(roadmap=roadmap, skill=cs.skill)
                 missing_skills.append({'skill': cs.skill, 'priority': cs.priority})
 
         if total > 0:
@@ -67,3 +70,35 @@ def skill_gap_analysis(request):
         'readiness':        readiness,
     }
     return render(request, 'analysis/skill_gap.html', context)
+
+@login_required
+@require_POST
+def trigger_roadmap_generation(request):
+    """
+    🎯 مطورة: لو المستخدم يمتلك خطة توليد مسبقة لنفس الكارير الحالي (حتى لو Readiness أقل من 100%)،
+    يتم توجيهه مباشرة دون مسح البيانات أو مناداة جميناي مجدداً.
+    """
+    user = request.user
+    
+    # 1. جلب الخطة الحالية المسجلة في قاعدة البيانات
+    roadmap = UserRoadmap.objects.filter(user=user).select_related('career').first()
+    
+    # 2. تحديد الكارير المستهدف
+    career = roadmap.career if roadmap else getattr(user, 'target_career', None)
+    
+    if not career:
+        return redirect('dashboard')
+        
+    # 3. 🎯 الفحص الذكي والمنعي: 
+    # لو الـ roadmap موجودة، ونفس الكارير المطلوب، وفيها json مولد مسبقاً ومخزن
+    if roadmap and roadmap.career_id == career.id and roadmap.roadmap_json:
+        # نقوم بالتحويل الفوري لصفحة الرودماب دون تصفير أو استدعاء جميناي
+        return redirect('/roadmap/')
+        
+    # 4. إذا كان الكارير جديد تماماً أو لا يوجد JSON مسبق، نقوم بالتوليد لأول مرة
+    try:
+        generate_and_save_roadmap(user, career)
+    except Exception as e:
+        print(f"💥 Error triggered during Gemini roadmap generation: {e}")
+        
+    return redirect('/roadmap/')

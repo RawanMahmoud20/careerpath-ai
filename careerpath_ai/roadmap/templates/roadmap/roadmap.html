@@ -3,6 +3,26 @@
 
 {% block content %}
 <div class="container">
+  
+  <!-- 🎯 Smart Check: If the user is 100% job-ready, display a premium English celebration card -->
+{% if overall == 100 or readiness_score == 100 or total_tasks == 0 or not phases_data and career %}    <div class="card" style="text-align: center; padding: 56px 24px; border: 2px solid #22c55e; background: #f0fdf4; border-radius: 14px; margin-top: 40px; box-shadow: 0 4px 20px rgba(34, 197, 94, 0.1);">
+        <div style="font-size: 72px; margin-bottom: 20px; animation: pulse 2s infinite;">🏆</div>
+        <h1 style="color: #15803d; font-size: 32px; font-weight: 800; margin-bottom: 14px; font-family: system-ui, sans-serif;">
+            You are Job-Ready!
+        </h1>
+        <p style="color: #166534; font-size: 16px; max-width: 620px; margin: 0 auto 28px auto; line-height: 1.6; font-family: system-ui, sans-serif;">
+            Outstanding achievement! You have successfully mastered all the required core skills and milestones for this path. Your technical profile completely satisfies 100% of the engineering metrics demanded by the current job market.
+        </p>
+        <div style="display: inline-block; background: #22c55e; color: white; padding: 12px 28px; border-radius: 30px; font-weight: 700; font-size: 14px; box-shadow: 0 2px 10px rgba(34,197,94,0.3);">
+            🎯 100% Technical Skills Matched
+        </div>
+        <div style="margin-top: 36px;">
+            <a href="/dashboard/" class="btn-secondary" style="padding: 10px 24px; text-decoration: none; font-weight: 600;">Explore Other Career Paths</a>
+        </div>
+    </div>
+
+  {% else %}
+  
   {% if not career %}
     <div class="card text-center" style="margin-top: 40px; padding: 48px;">
       <div style="font-size:48px; margin-bottom:16px;">🗺️</div>
@@ -119,6 +139,7 @@
       </div>
     </div>
   {% endif %}
+  {% endif %} <!-- End of 100% check -->
 </div>
 {% endblock %}
 
@@ -211,7 +232,6 @@
   .task-row:last-child {
     border-bottom: none;
   }
-  /* Zebra / alternate row tinting */
   .task-row-alt {
     background: rgba(79,70,229,0.025);
   }
@@ -289,7 +309,6 @@ const BADGE_CLS = {
   completed:   'badge-success',
 };
 
-/* ── counters ── */
 let totalTasks     = parseInt('{{ total_tasks }}') || 0;
 let completedTotal = parseInt('{{ completed_tasks }}') || 0;
 
@@ -301,7 +320,6 @@ function updateOverall() {
     completedTotal + ' of ' + totalTasks + ' tasks completed.';
 }
 
-/* ── phase toggle ── */
 function togglePhase(headerRow) {
   const phaseCard = headerRow.closest('.phase-card');
   const body      = phaseCard.querySelector('.tasks-body');
@@ -310,7 +328,6 @@ function togglePhase(headerRow) {
   chevron.classList.toggle('collapsed', isCollapsed);
 }
 
-/* ── auto-collapse a fully-done phase ── */
 function collapseIfAllDone(phaseCard) {
   const total     = parseInt(phaseCard.dataset.total);
   const completed = parseInt(phaseCard.dataset.completed);
@@ -322,7 +339,6 @@ function collapseIfAllDone(phaseCard) {
   }
 }
 
-/* ── main toggle ── */
 async function cycleStatus(btn) {
   const current  = btn.dataset.status;
   const next     = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
@@ -344,22 +360,18 @@ async function cycleStatus(btn) {
     const data = await resp.json();
     if (!data.ok) return;
 
-    /* update toggle button */
     btn.dataset.status  = next;
     btn.textContent     = ICONS[next];
 
-    /* update task row */
     const row = btn.closest('.task-row');
     row.classList.toggle('is-completed', next === 'completed');
     const titleEl = row.querySelector('.task-title-text');
     titleEl.classList.toggle('done-text', next === 'completed');
 
-    /* update status badge */
     const badge = row.querySelector('.task-status-badge');
     badge.textContent = LABELS[next];
     badge.className   = 'task-status-badge badge ' + BADGE_CLS[next];
 
-    /* update phase counter */
     const phaseCard = document.getElementById('phase-' + phaseNum);
     let phaseDone = parseInt(phaseCard.dataset.completed);
     if (current === 'completed') phaseDone--;
@@ -375,7 +387,6 @@ async function cycleStatus(btn) {
       phaseBadge.className  = 'phase-badge badge badge-success';
       phaseCircle.classList.add('phase-done');
       phaseCircle.textContent = '✓';
-      /* auto-collapse completed phase after a short delay */
       setTimeout(() => collapseIfAllDone(phaseCard), 600);
     } else {
       phaseBadge.className  = 'phase-badge badge badge-muted';
@@ -383,7 +394,6 @@ async function cycleStatus(btn) {
       phaseCircle.textContent = phaseNum;
     }
 
-    /* update overall */
     if (current === 'completed') completedTotal--;
     if (next    === 'completed') completedTotal++;
     updateOverall();

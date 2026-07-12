@@ -5,7 +5,7 @@ from .models import UserRoadmap, SkillGap
 class SkillGapInline(admin.TabularInline):
     model = SkillGap
     extra = 0
-    readonly_fields = ['skill_name', 'is_mastered']
+    readonly_fields = ['skill', 'is_mastered']
 
 
 @admin.register(UserRoadmap)

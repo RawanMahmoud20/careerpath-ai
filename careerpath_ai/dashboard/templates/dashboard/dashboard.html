@@ -5,7 +5,7 @@
 <div class="container">
 
   <div class="welcome-banner">
-<h1>Welcome, {{ request.user.full_name|default:user.username }}! 👋</h1>
+    <h1>Welcome, {{ request.user.full_name|default:user.username }}! 👋</h1>
     {% if target_career %}
       <p>You're on your way to becoming a {{ target_career.title }}.</p>
       <div class="progress-bar on-dark" style="max-width:320px;">
@@ -39,7 +39,7 @@
   <div class="mt-2" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
     <a href="/analysis/" class="btn-primary">View skill-gap analysis</a>
     <a href="/roadmap/" class="btn-secondary">Open my roadmap</a>
-</div>
+  </div>
   {% endif %}
 
   <h2 class="section-title">{% if target_career %}Explore other paths{% else %}Choose a career path{% endif %}</h2>
@@ -55,16 +55,23 @@
           <span class="skill-tag">{{ skill.name }}</span>
         {% endfor %}
       </div>
-<form method="post" action="/dashboard/select-career/{{ career.id }}/">
+      
+      <!-- 🎯 Career generation form with custom tracking class -->
+      <form method="post" action="/dashboard/select-career/{{ career.id }}/" class="career-generation-form">
           {% csrf_token %}
         <button type="submit" class="btn-primary btn-full">
           {% if career == target_career %}✓ Current target{% else %}Choose this path{% endif %}
         </button>
       </form>
-<a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>    </div>
+      <a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>    
+    </div>
     {% empty %}
     <p>No careers yet. Run <code>python manage.py seed_data</code>.</p>
     {% endfor %}
   </div>
 </div>
+
+
+
+
 {% endblock %}
