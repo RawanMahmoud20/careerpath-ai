@@ -19,14 +19,18 @@ def manage_skills_view(request):
     }
     return render(request, 'skills/manage_skills.html', context)
 @login_required
-def add_user_skill(request):
+def add_user_skill(request):  # تأكد أن اسم الدالة يطابق الاسم المربوط بـ add_skill في urls.py
     if request.method == 'POST':
         skill_id = request.POST.get('skill_id')
-        level = request.POST.get('current_level', 'beginner')
+        
+        # 🎯 التقاط اسم الحقل بالظبط كما هو مبعوث من الـ HTML: current_level
+        level = request.POST.get('current_level') or 'beginner'
         
         if skill_id:
             skill_obj = get_object_or_404(Skill, id=skill_id)
-            UserSkill.objects.get_or_create(
+            
+            # 🎯 التحديث الإجباري للمستوى لمنع بقائه beginner دائماً
+            UserSkill.objects.update_or_create(
                 user=request.user,
                 skill=skill_obj,
                 defaults={'level': level}

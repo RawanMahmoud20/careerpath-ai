@@ -4,6 +4,15 @@ from django.contrib.auth.forms import AdminPasswordChangeForm
 from django import forms
 
 from .models import User
+# 1️⃣ استيراد موديل المهارات من التطبيق الخاص به
+from skills.models import UserSkill  # تأكد من مسار الاستيراد الصحيح حسب مشروعك
+
+# 2️⃣ بناء الـ TabularInline الخاص بالمهارات هان مباشرة
+class UserSkillInline(admin.TabularInline):
+    model = UserSkill
+    extra = 1
+    fields = ('skill', 'level', 'added_at')
+    readonly_fields = ('added_at',)
 
 
 class AdminUserCreationForm(forms.ModelForm):
@@ -41,6 +50,9 @@ class UserAdmin(BaseUserAdmin):
     form = AdminUserChangeForm
     change_password_form = AdminPasswordChangeForm
     model = User
+
+    # 3️⃣ 🎯 هان السحر الحقيقي! نقوم بحقن جدول المهارات المدمج داخل اليوزر كلاس
+    inlines = [UserSkillInline]
 
     list_display = ("email", "full_name", "is_staff", "is_active", "date_joined")
     list_filter = ("is_staff", "is_superuser", "is_active")
