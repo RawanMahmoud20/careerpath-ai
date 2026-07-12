@@ -75,14 +75,45 @@ def _call_gemini(career_title: str, missing_skills: list[str]) -> dict:
     
     full_prompt = f"{SYSTEM_PROMPT}\n\nTask instructions:\n" + _user_prompt(career_title, missing_skills)
 
+    # 🎯 إعداد الـ Schema الصارمة لإجبار جميناي على الالتزام بالقالب ومنع الهلوسة خارج الـ JSON
     config = types.GenerateContentConfig(
         response_mime_type="application/json",
-        temperature=0.4,
+        temperature=0.1,  # خفض الحرارة لمنع الشطحات والنصوص العشوائية
+        response_schema={
+            "type": "OBJECT",
+            "properties": {
+                "phases": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "title": {"type": "STRING"},
+                            "description": {"type": "STRING"},
+                            "tasks": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "ref": {"type": "STRING"},
+                                        "title": {"type": "STRING"},
+                                        "description": {"type": "STRING"},
+                                        "estimated_time": {"type": "STRING"}
+                                    },
+                                    "required": ["ref", "title", "description", "estimated_time"]
+                                }
+                            }
+                        },
+                        "required": ["title", "description", "tasks"]
+                    }
+                }
+            },
+            "required": ["phases"]
+        }
     )
 
-    # 🎯 استخدام الموديل الأحدث للمكتبة الجديدة المتاح مجاناً للمشاريع الحالية
+    # 🎯 الموديل الرسمي المستقر والمجاني كلياً حالياً للمشاريع الجديدة
     response = client.models.generate_content(
-        model='gemini-2.5-flash', 
+        model='gemini-3.5-flash', 
         contents=full_prompt,
         config=config,
     )
