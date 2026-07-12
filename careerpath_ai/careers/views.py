@@ -6,6 +6,10 @@ from django.http import JsonResponse
 from django.db.models import Q
 
 from .models import Career
+from skills.models import UserSkill
+from careers.models import  CareerSkill
+from analysis.models import UserRoadmap
+from dashboard.models import UserTaskProgress
 from analysis.models import UserRoadmap
 from analysis.roadmap_generator import generate_and_save_roadmap
 
