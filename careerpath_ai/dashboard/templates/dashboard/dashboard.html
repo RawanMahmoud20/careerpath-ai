@@ -42,14 +42,26 @@
   </div>
   {% endif %}
 
-  
-  <h2 class="section-title">{% if target_career %}Explore other paths{% else %}Choose a career path{% endif %}</h2>
-<div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 24px;">
+  <!-- 🎯 الهيدر مع الزر في سطر واحد مقفل بشكل صحيح -->
+  <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2 class="section-title" style="margin: 0;">
+      {% if target_career %}Explore other paths{% else %}Choose a career path{% endif %}
+    </h2>
+    
+    <!-- الزر النظيف للانتقال لصفحة الـ Careers الكاملة -->
+    <a href="/careers/" class="btn-secondary" style="display: inline-block; padding: 8px 16px; font-size: 14px; font-weight: 600; text-decoration: none; background: #e2e8f0; color: #334155; border-radius: 6px; transition: all 0.2s; border: 1px solid #cbd5e1;">
+      <i class="bi bi-grid" style="margin-right: 6px;"></i> View All Careers
+    </a>
+  </div> <!-- 👈 قفلت الـ div هان عشان ما يبلعش الـ grid -->
+
+  <!-- 🎯 الـ Grid رجعت مستقلة وسليمة 100% -->
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 24px;">
     {% for career in careers %}
     <div class="career-card">
-<div class="career-icon-badge icon-bg-{{ career.icon_color }}">
-  <i class="bi {{ career.icon }}"></i>
-</div>      <div class="career-title">{{ career.title }}</div>
+      <div class="career-icon-badge icon-bg-{{ career.icon_color }}">
+        <i class="bi {{ career.icon }}"></i>
+      </div>      
+      <div class="career-title">{{ career.title }}</div>
       <div class="career-desc">{{ career.description|truncatewords:16 }}</div>
       <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
       <div class="skill-tags">
@@ -58,7 +70,7 @@
         {% endfor %}
       </div>
       
-      <!-- 🎯 Career generation form with custom tracking class -->
+      <!-- Career generation form -->
       <form method="post" action="/dashboard/select-career/{{ career.id }}/" class="career-generation-form">
           {% csrf_token %}
         <button type="submit" class="btn-primary btn-full">
@@ -71,9 +83,6 @@
     <p>No careers yet. Run <code>python manage.py seed_data</code>.</p>
     {% endfor %}
   </div>
+
 </div>
-
-
-
-
 {% endblock %}

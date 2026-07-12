@@ -11,84 +11,74 @@ from skills.models import Skill, UserSkill
 
 
 @login_required
-def roadmap(request):
+def view_roadmap(request):
     user = request.user
-
-    try:
-        user_roadmap = UserRoadmap.objects.select_related('career').get(user=user)
-    except UserRoadmap.DoesNotExist:
-        context = {
-            'career':          None,
-            'overall':         0,
-            'completed_tasks': 0,
-            'total_tasks':     0,
-            'phases_data':     [],
-            'next_step':       "Choose a career goal to generate your personalised roadmap!",
-        }
-        return render(request, 'roadmap/roadmap.html', context)
-
-    # Parse the stored JSON
-    try:
-        ai_roadmap = json.loads(user_roadmap.roadmap_json)
-    except (json.JSONDecodeError, TypeError):
-        ai_roadmap = {'phases': []}
-
-    # Load progress for this user
-    progress_map = {
-        p.task_ref: p.status
-        for p in UserTaskProgress.objects.filter(user=user)
-    }
-
+    
+    # 1. جلب الكارير النشط
+    profile = getattr(user, 'user_profile', None) or getattr(user, 'profile', None)
+    career = getattr(profile, 'target_career', None) if profile else None
+    
+    if not career:
+        # fallback
+        roadmap = UserRoadmap.objects.filter(user=user).first()
+        career = roadmap.career if roadmap else None
+    else:
+        roadmap = UserRoadmap.objects.filter(user=user, career=career).first()
+        
     phases_data = []
-    for phase in ai_roadmap.get('phases', []):
-        tasks = phase.get('tasks', [])
-        total = len(tasks)
-        phase_title_slug = phase.get('title', 'phase').lower().replace(' ', '-')
+    total_tasks = 0
+    completed_tasks = 0
+    overall = 0
+    
+    if roadmap and roadmap.roadmap_json:
+        try:
+            # تحليل الـ JSON القادم من جميناي
+            data = json.loads(roadmap.roadmap_json)
+            phases_data = data.get('phases', [])
+            
+            # 🎯 جلب كافة المهارات التي أكملها المستخدم مسبقاً من قاعدة البيانات دفعة واحدة لتسريع الأداء
+            user_progress_dict = {
+                progress.task_ref: progress.status 
+                for progress in UserTaskProgress.objects.filter(user=user)
+            }
+            
+            # قراءة وربط الحالات الحقيقية من الداتابيز بالـ JSON المعروض
+            for phase in phases_data:
+                tasks = phase.get('tasks', [])
+                total_tasks += len(tasks)
+                
+                phase_completed = 0
+                for t in tasks:
+                    ref_key = t.get('ref', '')
+                    # 🎯 دمج الحالة المخزنة بالـ DB بداخل أوبجكت الـ JSON الحالي
+                    db_status = user_progress_dict.get(ref_key, 'not_started')
+                    t['status'] = db_status
+                    
+                    if db_status == 'completed':
+                        completed_tasks += 1
+                        phase_completed += 1
+                
+                # إرسال العداد الفعلي للمرحلة الحالية ليفهمه الـ Template والـ JS
+                phase['completed'] = phase_completed
+                phase['total'] = len(tasks)
+                        
+            if total_tasks > 0:
+                overall = int((completed_tasks / total_tasks) * 100)
+        except Exception as e:
+            print(f"❌ Error parsing JSON in roadmap view: {e}")
 
-        formatted_tasks = []
-        for idx, t in enumerate(tasks):
-            task_ref = t.get('ref') or f"{phase_title_slug}-{idx + 1}"
-            formatted_tasks.append({
-                'task': {
-                    'task_ref':    task_ref,
-                    'title':       t.get('title', f'Task {idx + 1}'),
-                    'description': t.get('description', ''),
-                },
-                'status': progress_map.get(task_ref, 'not_started'),
-            })
-
-        completed = sum(1 for t in formatted_tasks if t['status'] == 'completed')
-        pct = int((completed / total) * 100) if total > 0 else 0
-
-        phases_data.append({
-            'phase': {
-                'phase_number': len(phases_data) + 1,
-                'title':        phase.get('title', ''),
-                'description':  phase.get('description', ''),
-            },
-            'tasks':     formatted_tasks,
-            'completed': completed,
-            'total':     total,
-            'pct':       pct,
-        })
-
-    all_tasks = sum(p['total'] for p in phases_data)
-    all_done  = sum(p['completed'] for p in phases_data)
-    overall   = int((all_done / all_tasks) * 100) if all_tasks > 0 else 0
-
-    career = user_roadmap.career
     context = {
-        'career':          career,
-        'overall':         overall,
-        'completed_tasks': all_done,
-        'total_tasks':     all_tasks,
-        'phases_data':     phases_data,
-        'next_step':       (
-            f"Continue your journey to become a {career.title}. "
-            "Complete each phase task by task!"
-        ),
+        'career': career,
+        'roadmap': roadmap,
+        'phases_data': phases_data,
+        'total_tasks': total_tasks,      
+        'completed_tasks': completed_tasks,
+        'overall': overall,
+        'readiness_score': roadmap.readiness_score if roadmap else 0,
     }
     return render(request, 'roadmap/roadmap.html', context)
+
+
 @login_required
 @require_POST
 def update_task_progress(request):
@@ -104,7 +94,7 @@ def update_task_progress(request):
     if not task_ref or not status:
         return JsonResponse({'ok': False, 'error': 'Missing data'}, status=400)
 
-    # 1. تحديث أو إنشاء حالة المهمة الحالية
+    # 1. تحديث أو إنشاء حالة المهمة الحالية في جدول التقدم
     UserTaskProgress.objects.update_or_create(
         user=user,
         task_ref=task_ref,
@@ -118,49 +108,50 @@ def update_task_progress(request):
             skill_prefix = task_ref.split('-')[0]
             print(f"🔍 Skill Prefix Extracted: '{skill_prefix}'")
             
-            user_roadmap = UserRoadmap.objects.get(user=user)
-            ai_roadmap = json.loads(user_roadmap.roadmap_json)
-            
-            # أ) حساب عدد المهام الكلية في الـ JSON التي تبدأ بنفس اسم المهارة
-            total_skill_tasks = 0
-            for phase in ai_roadmap.get('phases', []):
-                for task in phase.get('tasks', []):
-                    ref = task.get('ref', '')
-                    if ref.lower().startswith(f"{skill_prefix.lower()}-"):
-                        total_skill_tasks += 1
-
-            print(f"📊 [Total Tasks in JSON] for '{skill_prefix}': {total_skill_tasks}")
-
-            # b) حساب عدد المهام التي أكملها المستخدم بالفعل في قاعدة البيانات وتخص المهارة
-            completed_skill_tasks = UserTaskProgress.objects.filter(
-                user=user,
-                task_ref__istartswith=f"{skill_prefix}-",
-                status='completed'
-            ).count()
-
-            print(f"✅ [Completed Tasks in DB] for '{skill_prefix}': {completed_skill_tasks}")
-
-            # ج) إذا تساوى العددين، المهارة اكتملت بالكامل!
-            if total_skill_tasks > 0 and completed_skill_tasks == total_skill_tasks:
-                print(f"🎉 All tasks for '{skill_prefix}' are done! Upgrading skill...")
+            user_roadmap = UserRoadmap.objects.filter(user=user).first()
+            if user_roadmap and user_roadmap.roadmap_json:
+                ai_roadmap = json.loads(user_roadmap.roadmap_json)
                 
-                # البحث عن المهارة الأصلية في السيستم
-                skill_obj = Skill.objects.filter(name__icontains=skill_prefix).first()
-                print(f"🎯 Found Skill Object: {skill_obj}")
-                
-                if skill_obj:
-                    # تحديث الـ SkillGap الجديد باستخدام الـ ForeignKey
-                    SkillGap.objects.filter(roadmap=user_roadmap, skill=skill_obj).update(is_mastered=True)
+                # أ) حساب عدد المهام الكلية في الـ JSON التي تبدأ بنفس اسم المهارة
+                total_skill_tasks = 0
+                for phase in ai_roadmap.get('phases', []):
+                    for task in phase.get('tasks', []):
+                        ref = task.get('ref', '')
+                        if ref.lower().startswith(f"{skill_prefix.lower()}-"):
+                            total_skill_tasks += 1
+
+                print(f"📊 [Total Tasks in JSON] for '{skill_prefix}': {total_skill_tasks}")
+
+                # b) حساب عدد المهام التي أكملها المستخدم بالفعل في قاعدة البيانات وتخص المهارة
+                completed_skill_tasks = UserTaskProgress.objects.filter(
+                    user=user,
+                    task_ref__istartswith=f"{skill_prefix}-",
+                    status='completed'
+                ).count()
+
+                print(f"✅ [Completed Tasks in DB] for '{skill_prefix}': {completed_skill_tasks}")
+
+                # ج) إذا تساوى العددين، المهارة اكتملت بالكامل!
+                if total_skill_tasks > 0 and completed_skill_tasks == total_skill_tasks:
+                    print(f"🎉 All tasks for '{skill_prefix}' are done! Upgrading skill...")
                     
-                    # 🎯 التعديل الجوهري: تحديث المستوى إلى advanced بشكل إجباري ومضمون
-                    user_skill, created = UserSkill.objects.update_or_create(
-                        user=user,
-                        skill=skill_obj,
-                        defaults={'level': 'advanced'}
-                    )
-                    print(f"🔥 SUCCESS: '{skill_obj.name}' updated to ADVANCED! (Created row: {created})")
-            else:
-                print(f"⏳ Progress: {completed_skill_tasks}/{total_skill_tasks} tasks done for '{skill_prefix}'. Not advanced yet.")
+                    # البحث عن المهارة الأصلية في السيستم
+                    skill_obj = Skill.objects.filter(name__icontains=skill_prefix).first()
+                    print(f"🎯 Found Skill Object: {skill_obj}")
+                    
+                    if skill_obj:
+                        # تحديث الـ SkillGap الجديد باستخدام الـ ForeignKey
+                        SkillGap.objects.filter(roadmap=user_roadmap, skill=skill_obj).update(is_mastered=True)
+                        
+                        # تحديث المستوى إلى advanced بشكل إجباري ومضمون
+                        user_skill, created = UserSkill.objects.update_or_create(
+                            user=user,
+                            skill=skill_obj,
+                            defaults={'level': 'advanced'}
+                        )
+                        print(f"🔥 SUCCESS: '{skill_obj.name}' updated to ADVANCED! (Created row: {created})")
+                else:
+                    print(f"⏳ Progress: {completed_skill_tasks}/{total_skill_tasks} tasks done for '{skill_prefix}'. Not advanced yet.")
 
         except Exception as e:
             print(f"💥 Error in calculation: {e}")

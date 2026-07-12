@@ -61,30 +61,59 @@ def _user_prompt(career_title: str, missing_skills: list[str]) -> str:
 # Gemini call
 # ──────────────────────────────────────────────────────────────────────────────
 def _call_gemini(career_title: str, missing_skills: list[str]) -> dict:
-    """Call the modern Gemini API using google-genai SDK."""
+    """Call the modern Gemini API using google-genai SDK cleanly."""
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if not api_key:
         raise ImproperlyConfigured('GEMINI_API_KEY is not set in settings / .env')
 
-    # 🎯 استخدام المكتبة الحديثة المعتمدة رسميًا من جوجل
+    # الاستيراد النظيف من المكتبة الجديدة حصراً 
     from google import genai
     from google.genai import types
 
-    # إنشاء العميل تلقائيًا باستخدام الـ API Key
+    # إنشاء العميل النقي
     client = genai.Client(api_key=api_key)
     
-    # دمج الـ System Prompt مع الـ User Prompt في طلب واحد متكامل
     full_prompt = f"{SYSTEM_PROMPT}\n\nTask instructions:\n" + _user_prompt(career_title, missing_skills)
 
-    # إعداد التكوين لإجبار الموديل على إرجاعโครงสร้าง JSON نظيف ومباشر
+    # 🎯 إعداد الـ Schema الصارمة لإجبار جميناي على الالتزام بالقالب ومنع الهلوسة خارج الـ JSON
     config = types.GenerateContentConfig(
         response_mime_type="application/json",
-        temperature=0.4,
+        temperature=0.1,  # خفض الحرارة لمنع الشطحات والنصوص العشوائية
+        response_schema={
+            "type": "OBJECT",
+            "properties": {
+                "phases": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "title": {"type": "STRING"},
+                            "description": {"type": "STRING"},
+                            "tasks": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "ref": {"type": "STRING"},
+                                        "title": {"type": "STRING"},
+                                        "description": {"type": "STRING"},
+                                        "estimated_time": {"type": "STRING"}
+                                    },
+                                    "required": ["ref", "title", "description", "estimated_time"]
+                                }
+                            }
+                        },
+                        "required": ["title", "description", "tasks"]
+                    }
+                }
+            },
+            "required": ["phases"]
+        }
     )
 
-    # 🎯 استخدام الموديل الأحدث المدعوم بدلاً من الموديل المهجور
+    # 🎯 الموديل الرسمي المستقر والمجاني كلياً حالياً للمشاريع الجديدة
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
+        model='gemini-3.5-flash', 
         contents=full_prompt,
         config=config,
     )
@@ -92,7 +121,6 @@ def _call_gemini(career_title: str, missing_skills: list[str]) -> dict:
     raw = response.text or ''
     raw = raw.strip()
 
-    # تنظيف أي وسم ماركداون إضافي احتياطًا
     if raw.startswith('```'):
         lines = raw.splitlines()
         raw = '\n'.join(lines[1:-1] if lines[-1].strip() == '```' else lines[1:])
@@ -102,9 +130,6 @@ def _call_gemini(career_title: str, missing_skills: list[str]) -> dict:
     except json.JSONDecodeError as je:
         print(f"❌ [Gemini Modern JSON Error] Raw Text was: {raw}")
         raise je
-
-    if not isinstance(roadmap.get('phases'), list) or not roadmap['phases']:
-        raise ValueError('Gemini response has no phases list')
 
     return roadmap
 

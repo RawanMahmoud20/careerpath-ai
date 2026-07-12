@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import Skill
 from .models import UserSkill
+from dashboard.models import UserTaskProgress
 @login_required
 def manage_skills_view(request):
     user = request.user
@@ -37,9 +38,27 @@ def add_user_skill(request):  # تأكد أن اسم الدالة يطابق ا�
             )
     return redirect('skills:manage_skills')
 
+
+
 @login_required
 def remove_user_skill(request, skill_id):
     if request.method == 'POST':
         user_skill = get_object_or_404(UserSkill, user=request.user, skill_id=skill_id)
+        
+        # 1. 🔍 استخراج اسم المهارة الأصلي لتحويله لـ prefix (مثل: "Python" بتصير "python")
+        skill_name = user_skill.skill.name.lower()
+        print(f"\n🧹 [SKILL DELETION TRIGGERED] User is removing: '{skill_name}'")
+        
+        # 2. ⚡ الحماية الحديدية: حذف كافة تكات التقدم بجدول الـ UserTaskProgress اللي بتبدأ باسم المهارة
+        deleted_count, _ = UserTaskProgress.objects.filter(
+            user=request.user,
+            task_ref__istartswith=f"{skill_name}-"
+        ).delete()
+        
+        print(f"✅ Cleaned up {deleted_count} stale tasks from UserTaskProgress for '{skill_name}'")
+        
+        # 3. حذف المهارة من حساب اليوزر
         user_skill.delete()
+        print(f"🔥 Skill row deleted from UserSkill successfully.\n")
+        
     return redirect('skills:manage_skills')

@@ -47,45 +47,73 @@ def dashboard(request):
         'careers':       Career.objects.all(),
     }
     return render(request, 'dashboard/dashboard.html', context)
-
-
-
 @login_required
-def select_career(request, career_id):
+def select_career(request, career_id):  # أو choose_career حسب اسم الـ view عندك
     if request.method == 'POST':
         try:
             career = get_object_or_404(Career, id=career_id)
             
-            # 🎯 الفحص الذكي: جلب الخطة الحالية لو موجودة مسبقاً
+            # 1️⃣ جلب جميع المهارات المتقدمة (Advanced) التي يمتلكها اليوزر حالياً
+            from skills.models import UserSkill
+            from careers.models import CareerSkill
+            from dashboard.models import UserTaskProgress
+            from analysis.models import UserRoadmap
+
+            advanced_user_skills = list(
+                UserSkill.objects.filter(user=request.user, level='advanced')
+                .select_related('skill')
+                .values_list('skill__id', flat=True)
+            )
+
+            # 2️⃣ جلب المهارات المطلوبة للكارير المختار
+            career_skills = CareerSkill.objects.filter(career=career).select_related('skill')
+            career_skill_ids = [cs.skill.id for cs in career_skills]
+
+            # 3️⃣ الفحص الذكي: هل اليوزر يمتلك كافة مهارات هذا الكارير بمستوى Advanced مسبقاً؟
+            is_already_fully_qualified = all(sk_id in advanced_user_skills for sk_id in career_skill_ids) if career_skill_ids else False
+
             existing_roadmap = UserRoadmap.objects.filter(user=request.user).first()
             
-            # لو اليوزر اختار كارير جديد تماماً، بنحدث الكارير وبنصفر السكور مبدئياً لحين الضغط على زر التوليد
             if not existing_roadmap or existing_roadmap.career_id != career.id:
-                UserRoadmap.objects.update_or_create(
-                    user=request.user,
-                    defaults={
-                        'career': career,
-                        'readiness_score': 0, # تصفير مبدئي للكارير الجديد
+                
+                # حذف بيانات التتبع القديمة للكارير السابق
+                UserTaskProgress.objects.filter(user=request.user).delete()
+                
+                if is_already_fully_qualified:
+                    # 🎉 حالة خاصة: اليوزر جاهز 100% مسبقاً! نثبت السكور 100 فوراً بالداشبورد
+                    completed_roadmap_json = {
+                        "career": career.title,
+                        "phases": [{"phase_number": 1, "phase_title": "Completed", "tasks": []}]
                     }
-                )
-                messages.success(
-                    request,
-                    f"Target career switched to {career.title}. Review your skill gaps and generate your roadmap below!",
-                )
+                    UserRoadmap.objects.update_or_create(
+                        user=request.user,
+                        defaults={
+                            'career': career,
+                            'roadmap_json': json.dumps(completed_roadmap_json),
+                            'readiness_score': 100,  # 🔥 هان السر! ثبتناها 100% علطول بالداتابيز
+                        }
+                    )
+                    messages.success(request, f"🎯 Outstanding! You are already 100% qualified for {career.title}.")
+                else:
+                    # اللوجيك العادي لو الكارير جديد واليوزر مش جاهز فيه لسا
+                    UserRoadmap.objects.update_or_create(
+                        user=request.user,
+                        defaults={
+                            'career': career,
+                            'roadmap_json': '',     # تصفير النص للتوليد اليدوي لاحقاً
+                            'readiness_score': 0,   # يبدأ من 0% لأنه بحاجة لتوليد مهام
+                        }
+                    )
+                    messages.success(request, f"Target career switched to {career.title}. Go to Skill Gap to generate your roadmap!")
             else:
-                # لو اختار نفس الكارير الحالي تظل بياناته كما هي دون أي تصفير
                 messages.info(request, f"Current career is already set to {career.title}.")
 
-            # 🎯 التوجيه المنطقي لصفحة الـ Skill Gap باستخدام الـ name الخاص بالـ URL ليكون متناسقاً
             return redirect('/dashboard/')
 
         except Exception as e:
             messages.error(request, f"Error selecting career: {e}")
 
-    # إذا لم يكن الطلب POST يرجع للـ dashboard
     return redirect('/dashboard/')
-
-
 @login_required
 def profile_view(request):
     user = request.user
