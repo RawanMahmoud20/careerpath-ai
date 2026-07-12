@@ -49,7 +49,6 @@ def dashboard(request):
     return render(request, 'dashboard/dashboard.html', context)
 
 
-
 @login_required
 def select_career(request, career_id):
     if request.method == 'POST':
@@ -59,15 +58,26 @@ def select_career(request, career_id):
             # 🎯 الفحص الذكي: جلب الخطة الحالية لو موجودة مسبقاً
             existing_roadmap = UserRoadmap.objects.filter(user=request.user).first()
             
-            # لو اليوزر اختار كارير جديد تماماً، بنحدث الكارير وبنصفر السكور مبدئياً لحين الضغط على زر التوليد
+            # لو اليوزر اختار كارير جديد تماماً
             if not existing_roadmap or existing_roadmap.career_id != career.id:
+                
+                print(f"\n🔄 [CAREER CHANGED] Switched to: '{career.title}'")
+                
+                # 1. 🚨 القضاء على التقدم القديم: حذف كافة التكات المنجزة مسبقاً لتبدأ من 0%
+                deleted_progress, _ = UserTaskProgress.objects.filter(user=request.user).delete()
+                print(f"🧹 Cleaned up {deleted_progress} old tasks from UserTaskProgress.")
+                
+                # 2. تحديث الكارير وتصفير الـ JSON والسكور تماماً لإجبار السيستم على التوليد النظيف
                 UserRoadmap.objects.update_or_create(
                     user=request.user,
                     defaults={
                         'career': career,
-                        'readiness_score': 0, # تصفير مبدئي للكارير الجديد
+                        'roadmap_json': '',     # 🧼 تصفير النص المعلق تماماً لمنع تداخل الداتا
+                        'readiness_score': 0,   # تصفير مبدئي للكارير الجديد
                     }
                 )
+                print(f"✅ UserRoadmap wiped and updated for fresh generation.\n")
+                
                 messages.success(
                     request,
                     f"Target career switched to {career.title}. Review your skill gaps and generate your roadmap below!",
@@ -76,15 +86,12 @@ def select_career(request, career_id):
                 # لو اختار نفس الكارير الحالي تظل بياناته كما هي دون أي تصفير
                 messages.info(request, f"Current career is already set to {career.title}.")
 
-            # 🎯 التوجيه المنطقي لصفحة الـ Skill Gap باستخدام الـ name الخاص بالـ URL ليكون متناسقاً
             return redirect('/dashboard/')
 
         except Exception as e:
             messages.error(request, f"Error selecting career: {e}")
 
-    # إذا لم يكن الطلب POST يرجع للـ dashboard
     return redirect('/dashboard/')
-
 
 @login_required
 def profile_view(request):
