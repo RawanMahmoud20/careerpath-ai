@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block title %}Verify Your Email – CareerPath AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Page wrapper ── */
+    .otp-wrapper {
+        min-height: calc(100vh - 73px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--gradient);
+        padding: 32px 16px;
+    }
+
+    /* ── Card ── */
+    .otp-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 48px 44px 40px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+        text-align: center;
+    }
+
+    /* ── Icon badge ── */
+    .otp-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 28px;
+    }
+
+    /* ── Headings ── */
+    .otp-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 8px;
+    }
+
+    .otp-subtitle {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    .otp-subtitle strong {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    /* ── Six-box input row ── */
+    .otp-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 28px;
+    }
+
+    .otp-digit {
+        width: 52px;
+        height: 60px;
+        border: 2px solid #D1D5DB;
+        border-radius: 10px;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        color: var(--text);
+        background: #F9FAFB;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s, background .2s;
+        /* No spinner on number inputs */
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .otp-digit::-webkit-outer-spin-button,
+    .otp-digit::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+    }
+
+    .otp-digit:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    }
+
+    .otp-digit.filled {
+        border-color: var(--primary);
+        background: #EEF2FF;
+    }
+
+    /* ── Submit button ── */
+    .otp-btn {
+        width: 100%;
+        padding: 14px;
+        background: var(--gradient);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s;
+        margin-bottom: 24px;
+    }
+
+    .otp-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+    }
+
+    /* ── Timer area ── */
+    .otp-timer {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+    }
+
+    .otp-timer .countdown {
+        font-weight: 700;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .otp-timer .countdown.expiring {
+        color: #EF4444;
+    }
+
+    /* ── Resend ── */
+    .resend-form {
+        display: inline;
+    }
+
+    .resend-btn {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+        font-family: inherit;
+    }
+
+    .resend-btn:disabled {
+        color: #9CA3AF;
+        cursor: default;
+        text-decoration: none;
+    }
+
+    /* ── Divider / back link ── */
+    .otp-back {
+        margin-top: 20px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .otp-back a {
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .otp-back a:hover {
+        text-decoration: underline;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+        .otp-card {
+            padding: 36px 20px 28px;
+        }
+
+        .otp-digit {
+            width: 42px;
+            height: 52px;
+            font-size: 20px;
+        }
+
+        .otp-inputs {
+            gap: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="otp-wrapper">
+    <div class="otp-card">
+
+        <!-- Icon -->
+        <div class="otp-icon">📧</div>
+
+        <!-- Title & subtitle -->
+        <h1 class="otp-title">Check your inbox</h1>
+        <p class="otp-subtitle">
+            We sent a 6-digit verification code to<br>
+            <strong>{{ email }}</strong>
+        </p>
+
+        <!-- Flash messages inside OTP card -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}" style="margin-bottom: 15px;">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- OTP form -->
+        <form method="post" action="{% url 'verify_otp' %}" id="otp-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="verify">
+            <input type="hidden" name="otp" id="otp-hidden">
+
+            <div class="otp-inputs" id="otp-inputs">
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="one-time-code" autofocus>
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="off">
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="off">
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="off">
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="off">
+                <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"
+                    autocomplete="off">
+            </div>
+
+            <button type="submit" class="otp-btn" id="verify-btn">Verify Email ✓</button>
+        </form>
+
+        <!-- Timer -->
+        <div class="otp-timer">
+            Code expires in <span class="countdown" id="countdown">10:00</span>
+        </div>
+
+        <!-- Resend -->
+        <div style="font-size:14px; color:var(--text-muted);">
+            Didn't receive it?
+            <form method="post" action="{% url 'verify_otp' %}" class="resend-form" id="resend-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resend">
+                <button type="submit" class="resend-btn" id="resend-btn" disabled>
+                    Resend code
+                </button>
+            </form>
+        </div>
+
+        <!-- Back link -->
+        <div class="otp-back">
+            <a href="{% url 'cancel_registration' %}">← Use a different email</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const digits = Array.from(document.querySelectorAll('.otp-digit'));
+        const hidden = document.getElementById('otp-hidden');
+        const form = document.getElementById('otp-form');
+        const countdown = document.getElementById('countdown');
+        const resendBtn = document.getElementById('resend-btn');
+
+        /* ── Sync all digit values into hidden input ── */
+        function sync() {
+            hidden.value = digits.map(d => d.value).join('');
+        }
+
+        /* ── Auto-advance, backspace, and visualise ── */
+        digits.forEach((box, i) => {
+            box.addEventListener('input', () => {
+                // Allow only digits
+                box.value = box.value.replace(/\D/g, '').slice(-1);
+                box.classList.toggle('filled', box.value !== '');
+                sync();
+                if (box.value && i < digits.length - 1) digits[i + 1].focus();
+            });
+
+            box.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && !box.value && i > 0) {
+                    digits[i - 1].value = '';
+                    digits[i - 1].classList.remove('filled');
+                    digits[i - 1].focus();
+                    sync();
+                }
+                // Allow Ctrl+V to fall through to paste handler
+            });
+
+            /* Paste a full 6-digit code into any box */
+            box.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData)
+                    .getData('text').replace(/\D/g, '').slice(0, 6);
+                text.split('').forEach((ch, j) => {
+                    if (digits[j]) {
+                        digits[j].value = ch;
+                        digits[j].classList.add('filled');
+                    }
+                });
+                const nextEmpty = digits.findIndex(d => !d.value);
+                (nextEmpty === -1 ? digits[digits.length - 1] : digits[nextEmpty]).focus();
+                sync();
+            });
+        });
+
+        /* ── Guard: require all 6 digits before submit ── */
+        form.addEventListener('submit', e => {
+            sync();
+            if (hidden.value.length < 6) {
+                e.preventDefault();
+                const first = digits.find(d => !d.value);
+                if (first) first.focus();
+            }
+        });
+
+        /* ── Countdown (10 minutes) ── */
+        let remaining = 600;
+
+        function tick() {
+            if (remaining <= 0) {
+                countdown.textContent = '00:00';
+                countdown.classList.add('expiring');
+                resendBtn.disabled = false;
+                return;
+            }
+
+            remaining--;
+
+            const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+            const s = String(remaining % 60).padStart(2, '0');
+            countdown.textContent = `${m}:${s}`;
+
+            if (remaining <= 60) {
+                countdown.classList.add('expiring');
+                resendBtn.disabled = false;   // enable resend in last 60 s
+            }
+
+            setTimeout(tick, 1000);
+        }
+
+        setTimeout(tick, 1000);
+    })();
+</script>
+{% endblock %}
