@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q
-from .forms import NewRegisterForm
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from .forms import NewRegisterForm, PasswordResetRequestForm, SetNewPasswordForm
 from .models import EmailOTP
 
 
@@ -61,9 +64,7 @@ def register_view(request):
             request.session['pending_user_id'] = user.pk
             return redirect('verify_otp')
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{error}")
+            pass   # form returned with .errors; template renders them inline per field
     else:
         form = NewRegisterForm()
 
@@ -196,3 +197,101 @@ def login_view(request):
 def logout_view(request):
     auth_logout(request)
     return redirect('landing')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Password Reset – Step 1: Request a reset link
+# ─────────────────────────────────────────────────────────────────────────────
+
+def password_reset_request_view(request):
+    """User enters their email; we send a secure one-time reset link."""
+    if request.user.is_authenticated:
+        return redirect('/dashboard/')
+
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            from .models import User
+            user = User.objects.filter(email__iexact=email, is_active=True).first()
+
+            if user:
+                uid   = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                reset_url = request.build_absolute_uri(
+                    f'/accounts/reset-password/{uid}/{token}/'
+                )
+
+                subject = "Reset your CareerPath AI password"
+                body = (
+                    f"Hi {user.full_name or user.username},\n\n"
+                    f"We received a request to reset the password for your account.\n\n"
+                    f"Click the link below to set a new password (expires in 1 hour):\n\n"
+                    f"  {reset_url}\n\n"
+                    f"If you didn't request this, you can safely ignore this email.\n\n"
+                    f"— The CareerPath AI Team"
+                )
+                send_mail(
+                    subject, body, settings.DEFAULT_FROM_EMAIL,
+                    [user.email], fail_silently=False,
+                )
+
+            # Always show the same message to avoid email enumeration
+            messages.success(
+                request,
+                "If that email address is registered, you'll receive a reset link shortly."
+            )
+            return redirect('password_reset_request')
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'accounts/password_reset_request.html', {'form': form})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Password Reset – Step 2: Consume the link & set new password
+# ─────────────────────────────────────────────────────────────────────────────
+
+def password_reset_confirm_view(request, uidb64, token):
+    """Validate the reset token and let the user choose a new password."""
+    from .models import User
+
+    # Decode the user pk
+    try:
+        uid  = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    # Validate the token
+    token_valid = user is not None and default_token_generator.check_token(user, token)
+
+    if not token_valid:
+        messages.error(
+            request,
+            "This password reset link is invalid or has expired. Please request a new one."
+        )
+        return redirect('password_reset_request')
+
+    if request.method == 'POST':
+        form = SetNewPasswordForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['password'])
+            # Make sure the account is fully active (edge case: reset before verification)
+            user.is_active = True
+            user.is_email_verified = True
+            user.save()
+            messages.success(
+                request,
+                "Your password has been updated. You can now log in with your new password."
+            )
+            return redirect('login')
+        # form errors will be shown in template
+    else:
+        form = SetNewPasswordForm()
+
+    return render(request, 'accounts/password_reset_confirm.html', {
+        'form': form,
+        'uidb64': uidb64,
+        'token': token,
+    })
