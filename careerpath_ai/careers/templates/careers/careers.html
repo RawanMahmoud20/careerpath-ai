@@ -7,18 +7,34 @@
   <div class="page-header">
     <div class="page-eyebrow">Explore paths</div>
     <h1 class="page-title">Choose your target career</h1>
-    <p class="page-subtitle">Pick the role you're aiming for — we'll tailor your roadmap around it.</p>
+    <p class="page-subtitle">Pick the role you're aiming for we'll tailor your roadmap around it.</p>
   </div>
 
-  {% if careers %}
-  <div class="grid">
+  {# ===== Live search box (Fetch API) ===== #}
+  <div class="search-wrapper">
+    <i class="bi bi-search search-icon"></i>
+    <input
+      type="text"
+      id="careerSearch"
+      class="search-input"
+      placeholder="Search careers or skills — try typing 'd'..."
+      autocomplete="off">
+    <button type="button" id="clearSearch" class="search-clear" title="Clear" hidden>
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <div id="searchStatus" class="search-status" hidden></div>
+
+  {# ===== Results grid (filled by JS, server-rendered on first load) ===== #}
+  <div class="grid" id="careersGrid">
     {% for career in careers %}
     <div class="career-card">
 
       <div class="flex-between" style="margin-bottom: 12px;">
-      <div class="career-icon-badge icon-bg-{{ career.icon_color }}">
-        <i class="bi {{ career.icon }}"></i>
-      </div>
+        <div class="career-icon-badge icon-bg-{{ career.icon_color }}">
+          <i class="bi {{ career.icon }}"></i>
+        </div>
         {% if career.id == selected_id %}
         <span class="badge badge-success">✓ Current target</span>
         {% endif %}
@@ -34,8 +50,7 @@
         {% endfor %}
       </div>
 
-      <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View
-        details</a>
+      <a href="{% url 'careers:detail' career.id %}" class="btn-ghost btn-full" style="margin-top: 8px;">View details</a>
 
       <form method="post" action="{% url 'careers:choose' career.id %}" style="margin-top: auto;">
         {% csrf_token %}
@@ -49,16 +64,143 @@
     </div>
     {% endfor %}
   </div>
-  {% else %}
-  <div class="card text-center" style="padding: 48px 24px;">
-    <div style="font-size: 48px;">📭</div>
-    <h3 style="margin-top: 16px;">No careers available yet</h3>
-    <p class="text-muted" style="font-size: 14px;">
-      Careers need to be added from the admin panel first.<br>
-      Go to <code>/admin/</code> &rarr; Careers &rarr; Add.
+
+  {# ===== Empty state (shown when a search returns nothing) ===== #}
+  <div class="card text-center" id="emptyState" style="padding: 48px 24px;" {% if careers %}hidden{% endif %}>
+    <div style="font-size: 48px;">🔍</div>
+    <h3 style="margin-top: 16px;" id="emptyTitle">No careers available yet</h3>
+    <p class="text-muted" style="font-size: 14px;" id="emptyText">
+      Careers need to be added from the admin panel first.
     </p>
   </div>
-  {% endif %}
 
 </div>
+
+{# ===== Live search with the Fetch API ===== #}
+<script>
+(function () {
+  const input       = document.getElementById('careerSearch');
+  const clearBtn    = document.getElementById('clearSearch');
+  const grid        = document.getElementById('careersGrid');
+  const status      = document.getElementById('searchStatus');
+  const emptyState  = document.getElementById('emptyState');
+  const emptyTitle  = document.getElementById('emptyTitle');
+  const emptyText   = document.getElementById('emptyText');
+  const csrfToken   = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+  let debounceTimer = null;
+  let activeRequest = null;
+
+  // Escape user/server text before injecting into HTML
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+  }
+
+  // Build one career card from an API result object
+  function buildCard(c) {
+    const skills = (c.skills || [])
+      .map(s => `<span class="skill-tag">${esc(s)}</span>`)
+      .join('');
+
+    const targetBadge = c.is_selected
+      ? '<span class="badge badge-success">✓ Current target</span>'
+      : '';
+
+    const actionBtn = c.is_selected
+      ? '<button type="submit" class="btn-secondary btn-full" disabled>✓ Selected</button>'
+      : '<button type="submit" class="btn-primary btn-full">Choose this path</button>';
+
+    return `
+      <div class="career-card">
+        <div class="flex-between" style="margin-bottom: 12px;">
+          <div class="career-icon-badge icon-bg-${esc(c.icon_color)}">
+            <i class="bi ${esc(c.icon)}"></i>
+          </div>
+          ${targetBadge}
+        </div>
+
+        <div class="career-title">${esc(c.title)}</div>
+        <div class="career-desc">${esc(c.description)}</div>
+        <div class="career-meta">⏱️ ${esc(c.estimated_time)}</div>
+
+        <div class="skill-tags">${skills}</div>
+
+        <a href="/careers/${c.id}/" class="btn-ghost btn-full" style="margin-top: 8px;">View details</a>
+
+        <form method="post" action="/careers/${c.id}/choose/" style="margin-top: auto;">
+          <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+          ${actionBtn}
+        </form>
+      </div>
+    `;
+  }
+
+  // Render the API response into the grid
+  function render(data) {
+    const { careers, query, count } = data;
+
+    if (count === 0) {
+      grid.innerHTML = '';
+      emptyTitle.textContent = 'No careers found';
+      emptyText.textContent  = `Nothing matched "${query}". Try a different keyword.`;
+      emptyState.hidden = false;
+    } else {
+      grid.innerHTML = careers.map(buildCard).join('');
+      emptyState.hidden = true;
+    }
+
+    if (query) {
+      status.textContent = `${count} ${count === 1 ? 'career' : 'careers'} matching "${query}"`;
+      status.hidden = false;
+    } else {
+      status.hidden = true;
+    }
+  }
+
+  // Call the search API
+  async function search(query) {
+    // Cancel any in-flight request so responses can't arrive out of order
+    if (activeRequest) activeRequest.abort();
+    activeRequest = new AbortController();
+
+    grid.classList.add('is-loading');
+
+    try {
+      const res = await fetch(`/careers/search/?q=${encodeURIComponent(query)}`, {
+        signal: activeRequest.signal,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+
+      const data = await res.json();
+      render(data);
+    } catch (err) {
+      if (err.name === 'AbortError') return;   // superseded by a newer keystroke
+      status.textContent = 'Something went wrong. Please try again.';
+      status.hidden = false;
+    } finally {
+      grid.classList.remove('is-loading');
+    }
+  }
+
+  // Debounce: wait until typing pauses so we don't fire on every keystroke
+  input.addEventListener('input', () => {
+    const query = input.value.trim();
+    clearBtn.hidden = query.length === 0;
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => search(query), 250);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    clearBtn.hidden = true;
+    search('');
+    input.focus();
+  });
+})();
+</script>
 {% endblock %}
