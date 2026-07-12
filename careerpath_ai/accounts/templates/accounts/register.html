@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Sign up – CareerPath AI{% endblock %}
 
 {% block extra_css %}
@@ -132,7 +133,11 @@
 {% block content %}
 <div class="auth-wrapper">
   <div class="auth-card">
-    <div class="auth-logo">🚀 CareerPath AI</div>
+    <div style="text-align:center; margin-bottom:12px;">
+      <img src="{% static 'images/logo.jpg' %}" alt="CareerPath AI Logo"
+        style="height:54px; width:auto; border-radius:8px; margin-bottom:8px;">
+      <div class="auth-logo" style="margin-bottom:0;">CareerPath AI</div>
+    </div>
     <p class="auth-subtitle">Create your account and start your career journey</p>
 
     {# Non-field errors (e.g. Passwords do not match) #}

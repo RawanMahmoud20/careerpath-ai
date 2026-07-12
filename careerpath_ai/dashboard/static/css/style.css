@@ -66,6 +66,30 @@ a {
   background-clip: text;
 }
 
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+
 .nav-links {
   display: flex;
   /* تظهر أفقية بشكل طبيعي في شاشات الكمبيوتر */
@@ -749,6 +773,7 @@ select.form-control {
   max-width: 820px;
   margin: 0 auto;
 }
+
 .hero-badge {
   display: inline-block;
   background: #EEF2FF;
@@ -759,6 +784,7 @@ select.form-control {
   border-radius: 24px;
   margin-bottom: 28px;
 }
+
 .hero h1 {
   font-size: 52px;
   font-weight: 800;
@@ -767,6 +793,7 @@ select.form-control {
   margin-bottom: 20px;
   color: var(--text);
 }
+
 .hero p {
   font-size: 18px;
   color: var(--text-muted);
@@ -774,18 +801,21 @@ select.form-control {
   margin: 0 auto 32px;
   line-height: 1.6;
 }
+
 .hero-buttons {
   display: flex;
   gap: 14px;
   justify-content: center;
   flex-wrap: wrap;
 }
+
 .section-title {
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 32px;
   color: var(--text);
 }
+
 .page-eyebrow {
   font-size: 13px;
   color: var(--text-muted);
@@ -794,7 +824,10 @@ select.form-control {
   margin-bottom: 4px;
   font-weight: 600;
 }
-.text-center { text-align: center; }
+
+.text-center {
+  text-align: center;
+}
 
 /* ==========================================================================
    📱 إعدادات الاستجابة الدقيقة (Mobile & Tablets < 768px)
@@ -905,29 +938,60 @@ select.form-control {
   justify-content: center;
   margin-bottom: 16px;
 }
-.icon-bg-blue   { background: #DBEAFE; }
-.icon-bg-blue i { color: #2563EB; }
+
+.icon-bg-blue {
+  background: #DBEAFE;
+}
+
+.icon-bg-blue i {
+  color: #2563EB;
+}
 
 .career-icon-badge i {
   font-size: 26px;
 }
 
 /* لون افتراضي (لو ما في تصنيف) */
-.icon-bg-default { background: #EEF2FF; }
-.icon-bg-default i { color: var(--primary); }
+.icon-bg-default {
+  background: #EEF2FF;
+}
+
+.icon-bg-default i {
+  color: var(--primary);
+}
 
 /* ألوان مميزة حسب نوع المجال */
-.icon-bg-blue   { background: #DBEAFE; }
-.icon-bg-blue i { color: #2563EB; }
+.icon-bg-blue {
+  background: #DBEAFE;
+}
 
-.icon-bg-green  { background: #D1FAE5; }
-.icon-bg-green i { color: #059669; }
+.icon-bg-blue i {
+  color: #2563EB;
+}
 
-.icon-bg-orange { background: #FFEDD5; }
-.icon-bg-orange i { color: #EA580C; }
+.icon-bg-green {
+  background: #D1FAE5;
+}
 
-.icon-bg-pink   { background: #FCE7F3; }
-.icon-bg-pink i { color: #DB2777; }
+.icon-bg-green i {
+  color: #059669;
+}
+
+.icon-bg-orange {
+  background: #FFEDD5;
+}
+
+.icon-bg-orange i {
+  color: #EA580C;
+}
+
+.icon-bg-pink {
+  background: #FCE7F3;
+}
+
+.icon-bg-pink i {
+  color: #DB2777;
+}
 
 /* ==========================================================================
    Avatar + Dropdown Menu (Landing page navbar)
@@ -994,10 +1058,12 @@ select.form-control {
 .dropdown-logout {
   color: #EF4444 !important;
 }
+
 button.avatar {
   padding: 0;
   font-family: inherit;
 }
+
 /* ==========================================================================
    Live career search (Fetch API)
    ========================================================================== */
