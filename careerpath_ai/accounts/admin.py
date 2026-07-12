@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django import forms
 
-from .models import User
+from .models import User, EmailOTP
 
 
 class AdminUserCreationForm(forms.ModelForm):
@@ -50,7 +50,7 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("full_name",)}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "is_email_verified", "groups", "user_permissions")}),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
     readonly_fields = ("last_login", "date_joined")
@@ -60,3 +60,9 @@ class UserAdmin(BaseUserAdmin):
             "fields": ("email", "full_name", "password1", "password2"),
         }),
     )
+
+
+@admin.register(EmailOTP)
+class EmailOTPAdmin(admin.ModelAdmin):
+    list_display = ('user', 'code', 'created_at', 'attempts')
+    readonly_fields = ('created_at',)

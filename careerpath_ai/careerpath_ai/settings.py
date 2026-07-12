@@ -136,3 +136,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 AUTH_USER_MODEL = 'accounts.User'
+
+# ── Email (Mailtrap sandbox) ───────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = '955da86df1e8ed'
+EMAIL_HOST_PASSWORD = '37557d37257b3d'
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'noreply@careerpath-ai.com'
