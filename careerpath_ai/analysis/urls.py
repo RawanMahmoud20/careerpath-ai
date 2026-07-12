@@ -5,4 +5,5 @@ app_name = 'analysis'
 
 urlpatterns = [
  path('', views.skill_gap_analysis, name='skill_gap'),
+ path('generate-roadmap/', views.trigger_roadmap_generation, name='generate_roadmap'),
 ]

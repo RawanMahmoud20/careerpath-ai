@@ -45,7 +45,9 @@
     {% empty %}
       <p style="color:var(--text-muted); font-size: 14px;">No skills need upgrading! 🎉</p>
     {% endfor %}
-  </div><!-- 3. المهارات المفقودة تماماً (Missing Skills) -->
+  </div>
+
+  <!-- 3. المهارات المفقودة تماماً (Missing Skills) -->
   <div>
     <h3 class="section-title" style="margin-top:0;">📚 Skills you need ({{ missing_skills|length }})</h3>
     {% for item in missing_skills %}
@@ -70,6 +72,7 @@
   </div>
 
 </div>
+  
   <!-- Progress -->
   <div class="card mt-2">
     <div class="flex-between">
@@ -83,8 +86,65 @@
       You've mastered {{ readiness }}% of the required skills for this role.
     </p>
   </div>
+<!-- 🎯 حاوية الزر الذكي المطور ديناميكياً بناءً على حالة الخطة -->
+  <div class="text-center mt-2" style="margin-top: 32px; margin-bottom: 20px;">
+    
+    <!-- 🔍 الفحص: لو الخطة موجودة، ولنفس الكارير المعروض حالياً، وتم توليد الـ JSON مسبقاً -->
+    {% if career and perfect_matched or skills_to_improve or missing_skills %}
+      {% if readiness < 100 and total_tasks != 0 %}
+        <!-- 🟢 حالة الاستمرار: الخطة موجودة مسبقاً ولم تكتمل بعد -->
+        <a href="/roadmap/" class="btn-primary" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 700; text-decoration: none; background: linear-gradient(135deg, #059669, #10B981); color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); transition: all 0.2s;">
+            🏃‍♂️ Continue My Journey
+        </a>
+      {% else %}
+        <!-- 🔵 حالة العرض العادي (لو جاهز 100%) -->
+        <a href="/roadmap/" class="btn-primary" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 700; text-decoration: none; background: linear-gradient(135deg, #2563EB, #3B82F6); color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); transition: all 0.2s;">
+            🗺️ View My Roadmap
+        </a>
+      {% endif %}
+      
+    {% else %}
+      <!-- 🟣 حالة التوليد لأول مرة: لو الكارير جديد تماماً ولا توجد خطة مخزنة له -->
+      <form method="post" action="{% url 'analysis:generate_roadmap' %}" id="roadmap-trigger-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-primary" style="padding: 16px 36px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2); transition: all 0.2s;">
+              🚀 Generate My AI Roadmap
+          </button>
+      </form>
+    {% endif %}
 
-  <div class="text-center mt-2">
-<a href="/roadmap/" class="btn-primary">Get my personalized roadmap →</a>  </div>
+  </div>
 </div>
+
+<!-- 🎯 شاشة التحميل الكاملة المدمجة بالإنجليزية (Full-Screen Loading Spinner Overlay) -->
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white;">
+    <div style="width: 64px; height: 64px; border: 5px solid #7C3AED; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px;"></div>
+    <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #f3e8ff; font-family: system-ui, sans-serif;">
+      Generating Your Personalised AI Roadmap... 🧠✨
+    </h3>
+    <p style="font-size: 15px; color: #94a3b8; font-family: system-ui, sans-serif;">
+      Please wait while Gemini analyzes your skill gaps and builds your learning phases.
+    </p>
+</div>
+
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #roadmap-trigger-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('roadmap-trigger-form');
+        const overlay = document.getElementById('loading-overlay');
+        
+        if (form && overlay) {
+            form.addEventListener('submit', function() {
+                overlay.style.display = 'flex'; // إظهار الشاشة والسبينر فوراً عند الضغط
+            });
+        }
+    });
+</script>
 {% endblock %}

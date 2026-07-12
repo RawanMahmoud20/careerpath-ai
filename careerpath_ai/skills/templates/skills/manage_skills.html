@@ -11,7 +11,8 @@
   <!-- Add skill Card With Category Filtering -->
   <div class="card" style="margin-bottom:32px;">
     <h3 style="margin-bottom:20px;">Add a skill</h3>
-    <form method="post" action="{% url 'skills:add_skill' %}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+<!-- الـ action يرجع لـ add_skill المعتمد في الـ urls.py لعدم حدوث خطأ -->
+<form method="post" action="{% url 'skills:add_skill' %}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">      
       {% csrf_token %}
       
       <!-- القائمة المنسدلة الأولى: الـ Category -->

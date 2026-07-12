@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from careers.models import Career
+from skills.models import Skill 
 
 User = get_user_model()
 
@@ -27,12 +28,13 @@ class UserRoadmap(models.Model):
 
 class SkillGap(models.Model):
     """Tracks which skills a user is missing for their target career."""
-    roadmap    = models.ForeignKey(UserRoadmap, on_delete=models.CASCADE, related_name='skill_gaps')
-    skill_name = models.CharField(max_length=100)
+    roadmap     = models.ForeignKey(UserRoadmap, on_delete=models.CASCADE, related_name='skill_gaps')
+    
+    skill = models.ForeignKey(Skill, on_delete=models.CASCADE, related_name='skill_gaps', null=True, blank=True)    
     is_mastered = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('roadmap', 'skill_name')
+        unique_together = ('roadmap', 'skill')
 
     def __str__(self):
-        return f"{self.roadmap.career.title} → {self.skill_name}"
+        return f"{self.roadmap.career.title} → {self.skill.name}"
