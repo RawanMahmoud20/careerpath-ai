@@ -1,133 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Sign up – CareerPath AI{% endblock %}
-
-{% block extra_css %}
-<style>
-  /* Eye toggle */
-  .pw-wrap {
-    position: relative;
-  }
-
-  .pw-wrap input {
-    padding-right: 44px;
-  }
-
-  .pw-eye {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 17px;
-    color: var(--text-muted);
-    user-select: none;
-    line-height: 1;
-  }
-
-  .pw-eye:hover {
-    color: var(--primary);
-  }
-
-  /* Strength bar */
-  .strength-bar-wrap {
-    height: 5px;
-    background: var(--border);
-    border-radius: 4px;
-    margin-top: 8px;
-    overflow: hidden;
-  }
-
-  .strength-bar {
-    height: 100%;
-    width: 0%;
-    border-radius: 4px;
-    transition: width .35s ease, background .35s ease;
-  }
-
-  .strength-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 5px;
-  }
-
-  .strength-hint {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .strength-label {
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  /* Inline field error */
-  .field-error {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    background: #FEF2F2;
-    border: 1px solid #FCA5A5;
-    border-radius: 6px;
-    color: #991B1B;
-    font-size: 12px;
-    line-height: 1.5;
-    padding: 7px 10px;
-    margin-top: 6px;
-  }
-
-  .field-error::before {
-    content: "✕";
-    font-size: 11px;
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  /* Password rules checklist (live feedback) */
-  .pw-rules {
-    list-style: none;
-    margin-top: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .pw-rules li {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: color .2s;
-  }
-
-  .pw-rules li::before {
-    content: "○";
-    font-size: 10px;
-    flex-shrink: 0;
-    transition: content .2s;
-  }
-
-  .pw-rules li.pass {
-    color: #059669;
-  }
-
-  .pw-rules li.pass::before {
-    content: "✓";
-    font-weight: 700;
-  }
-
-  .pw-rules li.fail {
-    color: #DC2626;
-  }
-
-  .pw-rules li.fail::before {
-    content: "✕";
-    font-weight: 700;
-  }
-</style>
-{% endblock %}
+{% block title %}Sign up - CareerPath AI{% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
@@ -135,90 +7,35 @@
     <div class="auth-logo">🚀 CareerPath AI</div>
     <p class="auth-subtitle">Create your account and start your career journey</p>
 
-    {# Non-field errors (e.g. Passwords do not match) #}
-    {% for error in form.non_field_errors %}
-    <div class="field-error" style="margin-bottom:10px;">{{ error }}</div>
-    {% endfor %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message message-danger">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
 
-    <form method="post" action="{% url 'signup' %}" id="signup-form">
+    <form method="post" action="{% url 'signup' %}">
       {% csrf_token %}
-
-      <!-- Full name -->
       <div class="form-group">
         <label for="id_full_name">Full name</label>
         {{ form.full_name }}
-        {% for err in form.full_name.errors %}
-        <div class="field-error">{{ err }}</div>
-        {% endfor %}
       </div>
-
-      <!-- Username -->
       <div class="form-group">
         <label for="id_username">Username</label>
         {{ form.username }}
-        {% for err in form.username.errors %}
-        <div class="field-error">{{ err }}</div>
-        {% endfor %}
       </div>
-
-      <!-- Email -->
       <div class="form-group">
         <label for="id_email">Email</label>
         {{ form.email }}
-        {% for err in form.email.errors %}
-        <div class="field-error">{{ err }}</div>
-        {% endfor %}
       </div>
-
-      <!-- Password -->
       <div class="form-group">
         <label for="id_password">Password</label>
-        <div class="pw-wrap">
-          <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••"
-            autocomplete="new-password" value="{{ form.password.value|default:'' }}">
-          <span class="pw-eye" data-target="id_password" title="Show/hide">👁</span>
-        </div>
-
-        <!-- Strength bar -->
-        <div class="strength-bar-wrap">
-          <div class="strength-bar" id="strength-bar"></div>
-        </div>
-        <div class="strength-row">
-          <span class="strength-hint" id="strength-hint">Min. 8 chars · letters, numbers &amp; symbols</span>
-          <span class="strength-label" id="strength-label"></span>
-        </div>
-
-        <!-- Live rules checklist -->
-        <ul class="pw-rules" id="pw-rules" aria-live="polite">
-          <li id="rule-len">At least 8 characters</li>
-          <li id="rule-alpha">Contains a letter</li>
-          <li id="rule-num">Contains a number</li>
-          <li id="rule-sym">Contains a symbol (!@#…)</li>
-          <li id="rule-notnumeric">Not entirely numeric</li>
-        </ul>
-
-        <!-- Server-side password errors (shown after submit) -->
-        {% for err in form.password.errors %}
-        <div class="field-error">{{ err }}</div>
-        {% endfor %}
+        {{ form.password }}
       </div>
-
-      <!-- Confirm password -->
       <div class="form-group">
         <label for="id_password2">Confirm password</label>
-        <div class="pw-wrap">
-          <input type="password" name="password2" id="id_password2" class="form-control" placeholder="••••••••"
-            autocomplete="new-password">
-          <span class="pw-eye" data-target="id_password2" title="Show/hide">👁</span>
-        </div>
-        {% for err in form.password2.errors %}
-        <div class="field-error">{{ err }}</div>
-        {% endfor %}
+        {{ form.password2 }}
       </div>
-
-      <button type="submit" class="btn-primary btn-full" id="signup-btn">
-        Create account
-      </button>
+      <button type="submit" class="btn-primary btn-full">Create account</button>
     </form>
 
     <div class="auth-footer">
@@ -226,83 +43,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  (function () {
-    // ── Eye toggles ──────────────────────────────────────────────────────────
-    document.querySelectorAll('.pw-eye').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const input = document.getElementById(btn.dataset.target);
-        if (!input) return;
-        const show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-        btn.textContent = show ? '🙈' : '👁';
-      });
-    });
-
-    // ── Strength bar + live rules ────────────────────────────────────────────
-    const pwInput = document.getElementById('id_password');
-    const bar = document.getElementById('strength-bar');
-    const label = document.getElementById('strength-label');
-    const hint = document.getElementById('strength-hint');
-
-    const ruleLen = document.getElementById('rule-len');
-    const ruleAlpha = document.getElementById('rule-alpha');
-    const ruleNum = document.getElementById('rule-num');
-    const ruleSym = document.getElementById('rule-sym');
-    const ruleNotNumeric = document.getElementById('rule-notnumeric');
-
-    const levels = [
-      { color: '#EF4444', text: 'Too weak', pct: 15 },
-      { color: '#F97316', text: 'Weak', pct: 35 },
-      { color: '#EAB308', text: 'Fair', pct: 55 },
-      { color: '#22C55E', text: 'Good', pct: 75 },
-      { color: '#10B981', text: 'Strong ✓', pct: 100 },
-    ];
-
-    function setRule(el, pass) {
-      el.classList.toggle('pass', pass);
-      el.classList.toggle('fail', !pass && pwInput.value.length > 0);
-    }
-
-    function update() {
-      const pw = pwInput.value;
-
-      const hasLen = pw.length >= 8;
-      const hasAlpha = /[A-Za-z]/.test(pw);
-      const hasNum = /[0-9]/.test(pw);
-      const hasSym = /[^A-Za-z0-9]/.test(pw);
-      const notNumOnly = !/^\d+$/.test(pw) || pw.length === 0;
-
-      setRule(ruleLen, hasLen);
-      setRule(ruleAlpha, hasAlpha);
-      setRule(ruleNum, hasNum);
-      setRule(ruleSym, hasSym);
-      setRule(ruleNotNumeric, notNumOnly);
-
-      if (!pw) {
-        bar.style.width = '0%';
-        label.textContent = '';
-        hint.textContent = 'Min. 8 chars · letters, numbers & symbols';
-        return;
-      }
-
-      // Score: each satisfied rule = 1 point
-      const s = [hasLen, hasAlpha, hasNum, hasSym].filter(Boolean).length;
-      const lvl = levels[Math.min(s, levels.length - 1)];
-      bar.style.width = lvl.pct + '%';
-      bar.style.background = lvl.color;
-      label.textContent = lvl.text;
-      label.style.color = lvl.color;
-      hint.textContent = '';
-    }
-
-    pwInput.addEventListener('input', update);
-
-    // Run once on load if the field already has a value (e.g. browser autofill / back button)
-    if (pwInput.value) update();
-  })();
-</script>
 {% endblock %}
