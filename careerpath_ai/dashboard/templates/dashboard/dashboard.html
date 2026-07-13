@@ -5,15 +5,15 @@
 <div class="container">
 
   <div class="welcome-banner">
-    <h1>Welcome, {{ request.user.full_name|default:user.username }}! 👋</h1>
+    <h1>Welcome, {{ request.user.full_name|default:user.username }}!</h1>
     {% if target_career %}
-      <p>You're on your way to becoming a {{ target_career.title }}.</p>
-      <div class="progress-bar on-dark" style="max-width:320px;">
-        <div class="progress-fill" style="width: {{ readiness }}%;"></div>
-      </div>
-      <p style="font-size:14px; margin-top:8px;">You've matched {{ readiness }}% of the required skills.</p>
+    <p>You're on your way to becoming a {{ target_career.title }}.</p>
+    <div class="progress-bar on-dark" style="max-width:320px;">
+      <div class="progress-fill" style="width: {{ readiness }}%;"></div>
+    </div>
+    <p style="font-size:14px; margin-top:8px;">You've matched {{ readiness }}% of the required skills.</p>
     {% else %}
-      <p>Choose a target career below to get your personalized skill-gap analysis and roadmap.</p>
+    <p>Choose a target career below to get your personalized skill-gap analysis and roadmap.</p>
     {% endif %}
   </div>
 
@@ -43,13 +43,15 @@
   {% endif %}
 
   <!-- 🎯 الهيدر مع الزر في سطر واحد مقفل بشكل صحيح -->
-  <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div class="flex-between"
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h2 class="section-title" style="margin: 0;">
       {% if target_career %}Explore other paths{% else %}Choose a career path{% endif %}
     </h2>
-    
+
     <!-- الزر النظيف للانتقال لصفحة الـ Careers الكاملة -->
-    <a href="/careers/" class="btn-secondary" style="display: inline-block; padding: 8px 16px; font-size: 14px; font-weight: 600; text-decoration: none; background: #e2e8f0; color: #334155; border-radius: 6px; transition: all 0.2s; border: 1px solid #cbd5e1;">
+    <a href="/careers/" class="btn-secondary"
+      style="display: inline-block; padding: 8px 16px; font-size: 14px; font-weight: 600; text-decoration: none; background: #e2e8f0; color: #334155; border-radius: 6px; transition: all 0.2s; border: 1px solid #cbd5e1;">
       <i class="bi bi-grid" style="margin-right: 6px;"></i> View All Careers
     </a>
   </div> <!-- 👈 قفلت الـ div هان عشان ما يبلعش الـ grid -->
@@ -60,24 +62,24 @@
     <div class="career-card">
       <div class="career-icon-badge icon-bg-{{ career.icon_color }}">
         <i class="bi {{ career.icon }}"></i>
-      </div>      
+      </div>
       <div class="career-title">{{ career.title }}</div>
       <div class="career-desc">{{ career.description|truncatewords:16 }}</div>
       <div class="career-meta">⏱️ {{ career.estimated_time }}</div>
       <div class="skill-tags">
         {% for skill in career.required_skills.all|slice:":3" %}
-          <span class="skill-tag">{{ skill.name }}</span>
+        <span class="skill-tag">{{ skill.name }}</span>
         {% endfor %}
       </div>
-      
+
       <!-- Career generation form -->
       <form method="post" action="/dashboard/select-career/{{ career.id }}/" class="career-generation-form">
-          {% csrf_token %}
+        {% csrf_token %}
         <button type="submit" class="btn-primary btn-full">
           {% if career == target_career %}✓ Current target{% else %}Choose this path{% endif %}
         </button>
       </form>
-      <a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>    
+      <a href="/careers/{{ career.id }}/" class="btn-ghost btn-full" style="margin-top:8px;">View details</a>
     </div>
     {% empty %}
     <p>No careers yet. Run <code>python manage.py seed_data</code>.</p>
