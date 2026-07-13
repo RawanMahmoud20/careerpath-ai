@@ -80,7 +80,8 @@ python manage.py runserver
 |--------|---------------|
 | Member 1 | `accounts` app — Auth, Profile, UserSkill form |
 | Member 2 | `careers` + `analysis` apps — Models, skill gap logic, result page |
-| Member 3 | `roadmap` + `dashboard` + AI integration |
+| Member 3 | `roadmap` + AI integration |
+| Rawan Mahmoud | Dashboard, Links, Navigation, Testing, Documentation & Presentation |
 
 ---
 
