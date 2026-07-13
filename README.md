@@ -91,3 +91,11 @@ python manage.py runserver
 - **Phase B**: OpenAI GPT-3.5 for personalized career summaries
 
 Set `OPENAI_API_KEY` in `.env` to enable Phase B.
+
+<img width="1920" height="2490" alt="image" src="https://github.com/user-attachments/assets/8f1cef19-2591-45f6-8c4f-8af6a405c6d9" />
+<img width="1920" height="1413" alt="image" src="https://github.com/user-attachments/assets/90589104-16f0-4c07-8775-cda845c4a604" />
+<img width="1920" height="1548" alt="image" src="https://github.com/user-attachments/assets/27e143f8-198a-4143-813a-d971ac710f05" />
+<img width="1920" height="1548" alt="image" src="https://github.com/user-attachments/assets/d0f941f7-3051-4674-9291-0dd649768fdd" />
+
+
+
