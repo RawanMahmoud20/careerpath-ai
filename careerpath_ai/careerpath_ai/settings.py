@@ -33,7 +33,11 @@ SECRET_KEY = 'django-insecure-ah7q(utv*+b@#g29t@^o2pnm3(yba11@*zq3&t^!45vf@ypi_y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    "careerpath-ai-production-9013.up.railway.app",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
