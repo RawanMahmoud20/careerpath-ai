@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'dashboard',
     'roadmap',
     'core',
-    "skills"
+    "skills",
+    "anymail",
 ]
 
 MIDDLEWARE = [
@@ -174,7 +175,8 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 AUTH_USER_MODEL = 'accounts.User'
 
-# ── Email (Mailtrap sandbox) ───────────────────────────────────────
+# ── Email Configuration ──────────────────────────────────────────────
+# Default to SMTP (ideal for local development via Mailtrap sandbox)
 EMAIL_BACKEND     = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST        = os.getenv('EMAIL_HOST', 'sandbox.smtp.mailtrap.io')
 EMAIL_HOST_USER   = os.getenv('EMAIL_HOST_USER', '')
@@ -183,6 +185,17 @@ EMAIL_PORT        = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS     = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_TIMEOUT     = 10
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@careerpath-ai.com')
+
+# Use Anymail Resend HTTP API in production if RESEND_API_KEY is defined
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {
+        "RESEND_API_KEY": RESEND_API_KEY,
+    }
+    # Resend onboarding fallback if no custom DEFAULT_FROM_EMAIL is set
+    if not os.getenv('DEFAULT_FROM_EMAIL'):
+        DEFAULT_FROM_EMAIL = "onboarding@resend.dev"
 
 # ── Message tag mapping ────────────────────────────────────────────
 # Django uses 'error' internally; our CSS uses 'danger' (Bootstrap convention).

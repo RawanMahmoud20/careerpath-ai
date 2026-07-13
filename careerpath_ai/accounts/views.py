@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login, authenticate, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -10,6 +12,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .forms import NewRegisterForm, PasswordResetRequestForm, SetNewPasswordForm
 from .models import EmailOTP
+
+logger = logging.getLogger(__name__)
 
 
 def send_otp_email(user):
@@ -25,13 +29,16 @@ def send_otp_email(user):
         f"This code expires in 10 minutes. Do not share it with anyone.\n\n"
         f"— The CareerPath AI Team"
     )
-    send_mail(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject,
+            body,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        logger.error("Failed to send OTP email to %s: %s", user.email, e)
 
 
 def register_view(request):
@@ -233,10 +240,13 @@ def password_reset_request_view(request):
                     f"If you didn't request this, you can safely ignore this email.\n\n"
                     f"— The CareerPath AI Team"
                 )
-                send_mail(
-                    subject, body, settings.DEFAULT_FROM_EMAIL,
-                    [user.email], fail_silently=False,
-                )
+                try:
+                    send_mail(
+                        subject, body, settings.DEFAULT_FROM_EMAIL,
+                        [user.email], fail_silently=False,
+                    )
+                except Exception as e:
+                    logger.error("Failed to send password reset email to %s: %s", user.email, e)
 
             # Always show the same message to avoid email enumeration
             messages.success(
