@@ -76,12 +76,12 @@ python manage.py runserver
 
 ## 👥 Team Task Division
 
-| Member | Responsibility |
-|--------|---------------|
-| Member 1 | `accounts` app — Auth, Profile, UserSkill form |
-| Member 2 | `careers` + `analysis` apps — Models, skill gap logic, result page |
-| Member 3 | `roadmap` + AI integration |
-| Member 4 | Dashboard, Links, Navigation, Testing, Documentation & Presentation |
+| Member |
+|--------|
+| Rawan yousef | 
+| Shams algouf| 
+| Ahmed abuhabel | 
+| mahmoud Abusamaan | 
 
 ---
 
