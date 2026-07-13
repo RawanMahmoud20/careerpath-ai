@@ -20,17 +20,17 @@
   {% if target_career %}
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-icon">🎯</div>
+      <div class="stat-icon"><i class="fa-solid fa-circle-check" style="color: var(--success);"></i></div>
       <div class="stat-number">{{ matched_count }}</div>
       <div class="stat-label">Skills you have</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">📚</div>
+      <div class="stat-icon"><i class="fa-solid fa-book-open" style="color: var(--warning);"></i></div>
       <div class="stat-number">{{ missing_count }}</div>
       <div class="stat-label">Skills to learn</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">🚀</div>
+      <div class="stat-icon"><i class="fa-solid fa-rocket" style="color: var(--primary);"></i></div>
       <div class="stat-number">{{ readiness }}%</div>
       <div class="stat-label">Job readiness</div>
     </div>
