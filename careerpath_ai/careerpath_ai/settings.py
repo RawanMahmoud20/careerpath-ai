@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 from dotenv import load_dotenv
 import os
+import urllib.parse
 
 from pathlib import Path
 
@@ -32,7 +33,15 @@ SECRET_KEY = 'django-insecure-ah7q(utv*+b@#g29t@^o2pnm3(yba11@*zq3&t^!45vf@ypi_y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    "careerpath-ai-production-9013.up.railway.app",
+    "localhost",
+    "127.0.0.1",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://careerpath-ai-production-9013.up.railway.app",
+]
 
 
 # Application definition
@@ -50,11 +59,13 @@ INSTALLED_APPS = [
     'dashboard',
     'roadmap',
     'core',
-    "skills"
+    "skills",
+    "anymail",
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -86,12 +97,29 @@ WSGI_APPLICATION = 'careerpath_ai.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+db_url = os.getenv('DATABASE_URL')
+if db_url:
+    parsed = urllib.parse.urlparse(db_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': parsed.path.lstrip('/'),
+            'USER': parsed.username,
+            'PASSWORD': parsed.password,
+            'HOST': parsed.hostname,
+            'PORT': str(parsed.port),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            }
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -129,22 +157,45 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Tell Django where to find project-wide static files (the css/js/img folder
 # at the project root). Without this, {% static %} can't locate style.css.
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 AUTH_USER_MODEL = 'accounts.User'
 
-# ── Email (Mailtrap sandbox) ───────────────────────────────────────
+# ── Email Configuration ──────────────────────────────────────────────
+# Default to SMTP (ideal for local development via Mailtrap sandbox)
 EMAIL_BACKEND     = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST        = os.getenv('EMAIL_HOST', 'sandbox.smtp.mailtrap.io')
 EMAIL_HOST_USER   = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_PORT        = int(os.getenv('EMAIL_PORT', 2525))
+EMAIL_PORT        = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS     = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_TIMEOUT     = 10
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@careerpath-ai.com')
+
+# Use Anymail Resend HTTP API in production if RESEND_API_KEY is defined
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+    ANYMAIL = {
+        "RESEND_API_KEY": RESEND_API_KEY,
+    }
+    # Resend onboarding fallback if no custom DEFAULT_FROM_EMAIL is set
+    if not os.getenv('DEFAULT_FROM_EMAIL'):
+        DEFAULT_FROM_EMAIL = "onboarding@resend.dev"
 
 # ── Message tag mapping ────────────────────────────────────────────
 # Django uses 'error' internally; our CSS uses 'danger' (Bootstrap convention).

@@ -1,0 +1,9 @@
+Django==5.2.16
+google-genai
+python-dotenv==1.0.0
+pymysql==1.2.0
+cryptography==49.0.0
+gunicorn==23.0.0
+whitenoise==6.8.2
+django-anymail[resend]
+

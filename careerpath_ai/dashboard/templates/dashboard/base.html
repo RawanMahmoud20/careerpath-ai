@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,20 +10,27 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
+
 <body>
 
   {% if user.is_authenticated %}
   <nav class="navbar">
-    <div class="flex-between" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative;">
+    <div class="flex-between"
+      style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; position: relative;">
 
       <!-- Left: logo -->
-      <a href="/dashboard/" class="logo">🚀 CareerPath AI</a>
+      <a href="/dashboard/" class="logo-link">
+        <img src="{% static 'images/logo.jpg' %}" alt="CareerPath AI Logo" class="logo-img">
+        <span class="logo-text">CareerPath AI</span>
+      </a>
 
       <!-- Center: nav links + mobile-only logout button -->
       <div class="nav-links" id="navLinks">
-        <a href="/dashboard/" class="{% if request.path == '/dashboard/' or request.path == '/dashboard' %}active{% endif %}">
+        <a href="/dashboard/"
+          class="{% if request.path == '/dashboard/' or request.path == '/dashboard' %}active{% endif %}">
           <i class="fa-solid fa-chart-simple" style="margin-right: 6px;"></i> Dashboard
         </a>
         <a href="/careers/" class="{% if 'careers' in request.path %}active{% endif %}">
@@ -39,12 +47,13 @@
         </a>
 
         <!-- Mobile-only logout link (hidden on desktop, shown inside the mobile menu) -->
-        <a href="/accounts/logout/" class="d-show-mobile" style="color: #EF4444; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px;">
+        <a href="/accounts/logout/" class="d-show-mobile"
+          style="color: #EF4444; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px;">
           <i class="fa-solid fa-arrow-right-from-bracket" style="margin-right: 6px;"></i> Logout
         </a>
       </div>
 
-    <!-- Right: profile menu, desktop logout button, and mobile hamburger -->
+      <!-- Right: profile menu, desktop logout button, and mobile hamburger -->
       <div class="nav-user" style="display: flex; align-items: center; gap: 16px;">
 
         <!-- Avatar with dropdown menu (Profile + Log out) -->
@@ -74,7 +83,7 @@
   {% if messages %}
   <div class="messages">
     {% for message in messages %}
-      <div class="message message-{{ message.tags }}">{{ message }}</div>
+    <div class="message message-{{ message.tags }}">{{ message }}</div>
     {% endfor %}
   </div>
   {% endif %}
@@ -98,7 +107,7 @@
     }
 
     // Close the dropdown when clicking outside of it
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       const menu = document.querySelector('.user-menu');
       const dropdown = document.getElementById('userDropdown');
       if (menu && !menu.contains(e.target)) {
@@ -107,4 +116,5 @@
     });
   </script>
 </body>
+
 </html>
